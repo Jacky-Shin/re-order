@@ -46,7 +46,7 @@ class DatabaseService {
    * 创建数据表（仅在原生应用中使用）
    * Note: This method is not used in web deployment
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // @ts-ignore - Method kept for potential future native app support
   private async createTables(): Promise<void> {
     // SQLite tables only needed in native apps
     // For web, we use Firebase + localStorage
