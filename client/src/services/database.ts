@@ -32,19 +32,10 @@ class DatabaseService {
         return;
       }
 
-      // 移动端环境：使用SQLite（本地存储）+ Firebase（同步）
-      this.sqlite = new SQLiteConnection(CapacitorSQLite);
-      this.db = await this.sqlite.createConnection(
-        'starbucks_db',
-        false,
-        'no-encryption',
-        1,
-        false
-      );
-      await this.db.open();
-      await this.createTables();
+      // 移动端环境：SQLite功能仅在原生应用中可用
+      // 对于Web部署，我们只使用Firebase + localStorage
+      console.warn('移动端环境：SQLite功能仅在原生应用中可用，Web环境使用Firebase + localStorage');
       this.isInitialized = true;
-      console.log('数据库初始化成功（SQLite + Firebase同步）');
     } catch (error) {
       console.error('数据库初始化失败:', error);
       throw error;
