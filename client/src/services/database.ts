@@ -153,7 +153,18 @@ class DatabaseService {
 
   async getMenuItems(): Promise<MenuItem[]> {
     if (Capacitor.getPlatform() === 'web') {
-      return this.getMenuItemsFromStorage();
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        console.log('✅ 从Firebase读取商品列表（跨设备同步）');
+        const items = await firebaseService.getMenuItems();
+        console.log(`✅ 从Firebase获取到 ${items.length} 个商品`);
+        return items;
+      } else {
+        console.warn('⚠️ Firebase不可用，从本地存储读取（不会跨设备同步）');
+        const items = await this.getMenuItemsFromStorage();
+        console.log(`从本地存储获取到 ${items.length} 个商品`);
+        return items;
+      }
     }
     if (!this.db) throw new Error('数据库未初始化');
 
