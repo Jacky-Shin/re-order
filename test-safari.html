@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Safari连接测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .success { background: #4CAF50; color: white; }
+        .error { background: #f44336; color: white; }
+        .loading { background: #ff9800; color: white; }
+        button {
+            background: #00704A;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005a3d; }
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Safari连接测试工具</h1>
+    
+    <div class="test-card">
+        <h2>1. 前端服务测试</h2>
+        <p>测试地址: <code id="frontend-url">http://localhost:3000</code></p>
+        <button onclick="testFrontend()">测试前端连接</button>
+        <div id="frontend-status"></div>
+    </div>
+    
+    <div class="test-card">
+        <h2>2. 后端API测试</h2>
+        <p>测试地址: <code id="backend-url">http://localhost:5000/api/health</code></p>
+        <button onclick="testBackend()">测试后端连接</button>
+        <div id="backend-status"></div>
+    </div>
+    
+    <div class="test-card">
+        <h2>3. 网络信息</h2>
+        <div class="info">
+            <p><strong>当前页面URL:</strong> <code id="current-url"></code></p>
+            <p><strong>浏览器:</strong> <code id="browser-info"></code></p>
+            <p><strong>用户代理:</strong> <code id="user-agent"></code></p>
+        </div>
+    </div>
+    
+    <div class="test-card">
+        <h2>4. 快速链接</h2>
+        <p>
+            <a href="http://localhost:3000" target="_blank">
+                <button>打开前端页面</button>
+            </a>
+            <a href="http://localhost:5000/api/health" target="_blank">
+                <button>测试后端API</button>
+            </a>
+        </p>
+    </div>
+    
+    <div class="test-card">
+        <h2>5. 故障排除提示</h2>
+        <div class="info">
+            <p><strong>如果前端无法连接：</strong></p>
+            <ul>
+                <li>确保前端服务正在运行：<code>cd client && npm run dev</code></li>
+                <li>检查3000端口是否被占用</li>
+                <li>尝试清除Safari缓存</li>
+            </ul>
+            
+            <p><strong>如果后端无法连接：</strong></p>
+            <ul>
+                <li>确保后端服务正在运行：<code>cd server && npm run dev</code></li>
+                <li>检查5000端口是否被占用</li>
+                <li>查看后端控制台是否有错误</li>
+            </ul>
+            
+            <p><strong>如果使用手机Safari：</strong></p>
+            <ul>
+                <li>必须使用IP地址，不能使用localhost</li>
+                <li>确保手机和电脑在同一WiFi网络</li>
+                <li>格式：<code>http://[你的IP]:3000</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前信息
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('browser-info').textContent = navigator.userAgent.includes('Safari') ? 'Safari' : '其他浏览器';
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        
+        // 如果是手机访问，自动检测IP
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            const ip = window.location.hostname;
+            document.getElementById('frontend-url').textContent = `http://${ip}:3000`;
+            document.getElementById('backend-url').textContent = `http://${ip}:5000/api/health`;
+        }
+        
+        async function testFrontend() {
+            const statusDiv = document.getElementById('frontend-status');
+            const url = document.getElementById('frontend-url').textContent;
+            
+            statusDiv.innerHTML = '<span class="status loading">测试中...</span>';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'no-cors' // 避免CORS问题
+                });
+                
+                // 由于no-cors模式，无法读取响应，但可以检查是否成功
+                statusDiv.innerHTML = '<span class="status success">✅ 前端服务可访问</span>';
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status error">❌ 无法连接前端: ${error.message}</span>`;
+            }
+        }
+        
+        async function testBackend() {
+            const statusDiv = document.getElementById('backend-status');
+            const url = document.getElementById('backend-url').textContent;
+            
+            statusDiv.innerHTML = '<span class="status loading">测试中...</span>';
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.status === 'ok') {
+                    statusDiv.innerHTML = '<span class="status success">✅ 后端API正常</span>';
+                } else {
+                    statusDiv.innerHTML = '<span class="status error">❌ 后端响应异常</span>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status error">❌ 无法连接后端: ${error.message}</span><br>
+                    <small>可能原因：后端未启动、端口被占用、CORS问题</small>`;
+            }
+        }
+        
+        // 页面加载时自动测试
+        window.onload = function() {
+            setTimeout(() => {
+                testBackend();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

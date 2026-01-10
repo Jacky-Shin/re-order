@@ -1,0 +1,26 @@
+{
+  "name": "starbucks-order-system",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "星巴克扫码点餐系统",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "keywords": [
+    "starbucks",
+    "ordering",
+    "system"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

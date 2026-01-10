@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点餐系统二维码 - 测试用</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #00704A 0%, #1e3932 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #00704A;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        #qrcode {
+            display: inline-block;
+        }
+        .url-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-size: 12px;
+            color: #333;
+        }
+        .url-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 15px 0;
+            transition: border-color 0.3s;
+        }
+        .url-input:focus {
+            outline: none;
+            border-color: #00704A;
+        }
+        .button {
+            background: #00704A;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #005a3d;
+        }
+        .button-secondary {
+            background: #6c757d;
+        }
+        .button-secondary:hover {
+            background: #5a6268;
+        }
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+        .instructions h3 {
+            color: #00704A;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+            color: #666;
+            line-height: 1.8;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☕ 星巴克点餐系统</h1>
+        <p class="subtitle">测试用二维码</p>
+        
+        <div class="qr-container">
+            <canvas id="qrcode"></canvas>
+        </div>
+        
+        <div class="url-info">
+            <strong>点餐地址：</strong><br>
+            <span id="url-display">加载中...</span>
+        </div>
+        
+        <div>
+            <input 
+                type="text" 
+                id="url-input" 
+                class="url-input" 
+                placeholder="输入点餐系统地址（例如：http://localhost:3000）"
+                value="http://localhost:3000"
+            >
+        </div>
+        
+        <div>
+            <button class="button" onclick="updateQRCode()">更新二维码</button>
+            <button class="button button-secondary" onclick="downloadQRCode()">下载二维码</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>📱 使用说明</h3>
+            <ol>
+                <li><strong>重要：</strong>手机扫码必须使用IP地址，不能使用localhost！</li>
+                <li>确保点餐系统正在运行（前端：http://localhost:3000）</li>
+                <li>获取电脑IP地址：<code>ipconfig</code>（Windows）</li>
+                <li>在上方输入框中输入IP地址（例如：http://10.0.0.59:3000），系统会自动添加 /menu 路径</li>
+                <li>点击"更新二维码"按钮生成新的二维码</li>
+                <li>使用手机扫描二维码即可进入<strong>客户点餐页面</strong>（不是商家后台）</li>
+                <li>确保手机和电脑在同一WiFi网络</li>
+                <li>可以下载二维码图片，打印后放置在餐桌上</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 获取当前页面的基础URL（确保指向客户点餐页面）
+        function getBaseUrl() {
+            const input = document.getElementById('url-input');
+            let url = input.value.trim();
+            
+            // 如果没有输入，尝试自动检测
+            if (!url) {
+                // 如果是localhost，尝试使用IP地址
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    // 提示用户输入IP地址
+                    url = 'http://10.0.0.59:3000'; // 默认使用检测到的IP
+                } else {
+                    url = window.location.origin;
+                }
+            }
+            
+            // 确保URL格式正确
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'http://' + url;
+            }
+            
+            // 移除末尾的斜杠
+            url = url.replace(/\/$/, '');
+            
+            // 确保URL指向客户点餐页面（/menu），而不是商家后台
+            if (url.includes('/admin') || url.includes('/merchant')) {
+                // 如果URL指向商家后台，替换为客户点餐页面
+                url = url.replace(/\/admin.*$/, '').replace(/\/merchant.*$/, '') + '/menu';
+            } else if (!url.includes('/menu') && !url.match(/\/[^\/]+$/)) {
+                // 如果URL只有域名和端口，添加 /menu 路径
+                url = url + '/menu';
+            }
+            
+            return url;
+        }
+
+        // 生成二维码
+        function generateQRCode() {
+            const url = getBaseUrl();
+            const canvas = document.getElementById('qrcode');
+            
+            // 清空canvas
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 更新显示
+            document.getElementById('url-display').textContent = url;
+            
+            // 生成二维码
+            QRCode.toCanvas(canvas, url, {
+                width: 300,
+                margin: 2,
+                color: {
+                    dark: '#00704A',
+                    light: '#FFFFFF'
+                },
+                errorCorrectionLevel: 'H'
+            }, function (error) {
+                if (error) {
+                    console.error('生成二维码失败:', error);
+                    alert('生成二维码失败，请检查URL格式');
+                }
+            });
+        }
+
+        // 更新二维码
+        function updateQRCode() {
+            generateQRCode();
+        }
+
+        // 下载二维码
+        function downloadQRCode() {
+            const canvas = document.getElementById('qrcode');
+            const url = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'starbucks-qrcode.png';
+            link.href = url;
+            link.click();
+        }
+
+        // 页面加载时生成二维码
+        window.onload = function() {
+            const input = document.getElementById('url-input');
+            const currentUrl = window.location.origin;
+            
+            // 如果是localhost，提示用户使用IP地址
+            if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
+                // 设置默认IP地址（用户可以根据实际情况修改）
+                input.value = 'http://10.0.0.59:3000';
+                input.placeholder = '请输入点餐系统地址（手机访问需使用IP地址，会自动添加 /menu 路径）';
+                
+                // 显示提示
+                const urlDisplay = document.getElementById('url-display');
+                urlDisplay.innerHTML = '<span style="color: orange;">⚠️ 注意：手机扫码需要使用IP地址，不能使用localhost</span><br>' + 
+                                      '<span style="color: #666;">当前设置: http://10.0.0.59:3000/menu（客户点餐页面）</span><br>' +
+                                      '<span style="color: #666; font-size: 11px;">如果IP不对，请在上方输入框中修改（只需输入域名+端口，会自动添加 /menu 路径）</span>';
+            } else {
+                // 如果不是localhost，使用当前URL
+                input.value = currentUrl;
+            }
+            
+            generateQRCode();
+        };
+
+        // 监听输入框变化
+        document.getElementById('url-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                updateQRCode();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { adminApi } from '../api/client';
+import { Order } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
+
+export default function AdminOrdersPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { t, language, setLanguage } = useLanguage();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState<string>(searchParams.get('status') || 'all');
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const loadOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await adminApi.getAllOrders();
+      setOrders(response.data.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ));
+    } catch (error) {
+      console.error('加载订单失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
+    try {
+      await adminApi.updateOrderStatus(orderId, newStatus);
+      await loadOrders();
+    } catch (error: any) {
+      alert(error.response?.data?.error || '更新状态失败');
+    }
+  };
+
+  const getStatusColor = (status: Order['status']) => {
+    const colorMap = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      preparing: 'bg-blue-100 text-blue-800',
+      ready: 'bg-green-100 text-green-800',
+      completed: 'bg-gray-100 text-gray-800',
+      cancelled: 'bg-red-100 text-red-800',
+    };
+    return colorMap[status];
+  };
+
+  const getStatusText = (status: Order['status']) => {
+    const statusMap = {
+      pending: t('admin.orders.status.pending'),
+      preparing: t('admin.orders.status.preparing'),
+      ready: t('admin.orders.status.ready'),
+      completed: t('admin.orders.status.completed'),
+      cancelled: t('admin.orders.status.cancelled'),
+    };
+    return statusMap[status];
+  };
+
+  const getPaymentMethodText = (method?: string) => {
+    const methodMap: Record<string, string> = {
+      cash: t('payment.cash'),
+      card: t('payment.card'),
+      visa: t('payment.visa'),
+    };
+    return methodMap[method || ''] || t('admin.orders.unpaid');
+  };
+
+  const filteredOrders = filterStatus === 'all' 
+    ? orders 
+    : orders.filter(o => o.status === filterStatus);
+
+  const statusFilters = [
+    { value: 'all', label: t('admin.orders.filter') },
+    { value: 'pending', label: t('admin.orders.status.pending') },
+    { value: 'preparing', label: t('admin.orders.status.preparing') },
+    { value: 'ready', label: t('admin.orders.status.ready') },
+    { value: 'completed', label: t('admin.orders.status.completed') },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white sticky top-0 z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate('/admin')}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="ml-4 text-lg font-semibold">{t('admin.orders.title')}</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Language Switcher */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
+              <button
+                onClick={() => setLanguage('zh')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  language === 'zh' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
+                }`}
+              >
+                中文
+              </button>
+              <button
+                onClick={() => setLanguage('es')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  language === 'es' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
+                }`}
+              >
+                ES
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex gap-2 flex-wrap">
+            {statusFilters.map((filter) => (
+              <button
+                key={filter.value}
+                onClick={() => setFilterStatus(filter.value)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  filterStatus === filter.value
+                    ? 'bg-sb-green text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Orders List */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sb-green"></div>
+            <p className="mt-4 text-gray-500">{t('common.loading')}</p>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+            <p className="text-gray-500">{t('admin.orders.empty')}</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredOrders.map((order) => (
+              <div key={order.id} className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <h3 className="text-lg font-semibold">{t('admin.orders.orderNumber')}: {order.orderNumber}</h3>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                        {getStatusText(order.status)}
+                      </span>
+                      {order.pickupNumber && (
+                        <span className="px-3 py-1 bg-sb-green text-white rounded-full text-sm font-semibold">
+                          {t('admin.orders.pickupNumber')}: {order.pickupNumber}
+                        </span>
+                      )}
+                      {order.tableNumber && (
+                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                          🪑 {t('admin.orders.tableNumber')}: {order.tableNumber}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>{t('admin.orders.createdAt')}: {new Date(order.createdAt).toLocaleString()}</p>
+                      {order.pickupDate && (
+                        <p>{t('admin.orders.pickupDate')}: {order.pickupDate}</p>
+                      )}
+                      {order.customerName && <p>{t('admin.orders.customer')}: {order.customerName}</p>}
+                      {order.phone && <p>{t('admin.orders.phone')}: {order.phone}</p>}
+                      {order.paymentMethod && (
+                        <p>{t('admin.orders.paymentMethod')}: {getPaymentMethodText(order.paymentMethod)}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-sb-green mb-2">
+                      ¥{order.totalAmount.toFixed(2)}
+                    </div>
+                    {order.paymentStatus === 'completed' && (
+                      <span className="text-xs text-green-600">{t('admin.orders.paid')}</span>
+                    )}
+                    {order.paymentStatus === 'pending' && order.paymentMethod === 'cash' && (
+                      <span className="text-xs text-yellow-600 font-semibold">💵 待支付现金</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t pt-4 mb-4">
+                  <h4 className="font-medium mb-2">{t('admin.orders.items')}</h4>
+                  <div className="space-y-2">
+                    {order.items.map((item) => (
+                      <div key={item.id} className="flex justify-between text-sm">
+                        <span>
+                          {item.name} {item.size && `(${item.size})`} x{item.quantity}
+                        </span>
+                        <span className="font-medium">¥{(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status Actions */}
+                {order.status !== 'completed' && order.status !== 'cancelled' && (
+                  <div className="border-t pt-4">
+                    <div className="flex gap-2 flex-wrap">
+                      {order.status === 'pending' && (
+                        <button
+                          onClick={() => handleStatusChange(order.id, 'preparing')}
+                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          {t('admin.orders.startPreparing')}
+                        </button>
+                      )}
+                      {order.status === 'preparing' && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await adminApi.notifyCustomer(order.id);
+                              if (response.data.success) {
+                                alert(t('admin.orders.notified'));
+                                await loadOrders();
+                              }
+                            } catch (error: any) {
+                              alert(error.response?.data?.error || t('common.error'));
+                            }
+                          }}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+                        >
+                          📢 {t('admin.orders.notifyCustomer')}
+                        </button>
+                      )}
+                      {order.status === 'ready' && (
+                        <>
+                          {order.notifiedAt && (
+                            <span className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm flex items-center">
+                              ✓ {t('admin.orders.notified')} ({new Date(order.notifiedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })})
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleStatusChange(order.id, 'completed')}
+                            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                          >
+                            {t('admin.orders.complete')}
+                          </button>
+                        </>
+                      )}
+                      {(order.status === 'pending' || order.status === 'preparing' || order.status === 'ready') && (
+                        <button
+                          onClick={() => handleStatusChange(order.id, 'cancelled')}
+                          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          {t('admin.orders.cancel')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

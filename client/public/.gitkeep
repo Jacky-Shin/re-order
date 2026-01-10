@@ -1,0 +1,4 @@
+# This file ensures the public directory is tracked by git
+# Place your icon files here:
+# - icon-192.png (192x192 pixels)
+# - icon-512.png (512x512 pixels)
