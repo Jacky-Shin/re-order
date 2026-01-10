@@ -5,15 +5,24 @@ import './index.css'
 import { LanguageProvider } from './contexts/LanguageContext'
 import { setupStorageSync } from './utils/storageSync'
 import { firebaseService } from './services/firebaseService'
+import { checkFirebaseStatus } from './utils/firebaseDebug'
 
 // Setup storage sync for Web environment
 if (typeof window !== 'undefined') {
   setupStorageSync();
   
   // 初始化Firebase（用于跨设备同步）
-  firebaseService.initialize().catch(error => {
-    console.error('Firebase初始化失败:', error);
-  });
+  firebaseService.initialize()
+    .then(() => {
+      console.log('Firebase初始化完成，状态:', firebaseService.isAvailable() ? '可用' : '不可用');
+      // 如果Firebase可用，执行状态检查
+      if (firebaseService.isAvailable()) {
+        checkFirebaseStatus().catch(console.error);
+      }
+    })
+    .catch(error => {
+      console.error('Firebase初始化失败:', error);
+    });
 }
 
 // Register Service Worker for PWA
