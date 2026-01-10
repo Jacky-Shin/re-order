@@ -7,6 +7,26 @@ import { setupStorageSync } from './utils/storageSync'
 import { firebaseService } from './services/firebaseService'
 import { checkFirebaseStatus } from './utils/firebaseDebug'
 
+// 初始化移动端控制台工具（Eruda）
+// 可以通过URL参数 ?debug=true 或 localStorage.setItem('eruda', 'true') 启用
+if (typeof window !== 'undefined') {
+  const urlParams = new URLSearchParams(window.location.search);
+  const enableEruda = 
+    urlParams.get('debug') === 'true' || 
+    localStorage.getItem('eruda') === 'true' ||
+    import.meta.env.DEV; // 开发环境自动启用
+  
+  if (enableEruda) {
+    import('eruda').then((eruda) => {
+      eruda.default.init();
+      console.log('📱 Eruda控制台已启用 - 可以在移动设备上查看日志');
+      console.log('💡 提示：可以通过 ?debug=true 或 localStorage.setItem("eruda", "true") 启用');
+    }).catch((error) => {
+      console.warn('Eruda加载失败:', error);
+    });
+  }
+}
+
 // Setup storage sync for Web environment
 if (typeof window !== 'undefined') {
   setupStorageSync();
