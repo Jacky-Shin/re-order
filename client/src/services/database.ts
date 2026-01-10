@@ -180,13 +180,23 @@ class DatabaseService {
   async addMenuItem(item: MenuItem): Promise<MenuItem> {
     if (Capacitor.getPlatform() === 'web') {
       // Web环境：优先使用Firebase，否则使用localStorage
+      console.log('添加商品到数据库...', { itemId: item.id, itemName: item.name });
+      
       if (firebaseService.isAvailable()) {
-        await firebaseService.addMenuItem(item);
+        console.log('✅ 使用Firebase同步（跨设备）');
+        try {
+          await firebaseService.addMenuItem(item);
+          console.log('✅ 商品已同步到Firebase');
+        } catch (error) {
+          console.error('❌ Firebase同步失败:', error);
+        }
         // 同时保存到localStorage作为备份
         await this.addMenuItemToStorage(item);
         return item;
+      } else {
+        console.warn('⚠️ Firebase不可用，仅保存到本地存储（不会跨设备同步）');
+        return this.addMenuItemToStorage(item);
       }
-      return this.addMenuItemToStorage(item);
     }
     if (!this.db) throw new Error('数据库未初始化');
 

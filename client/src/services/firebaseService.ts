@@ -44,8 +44,15 @@ class FirebaseService {
 
     try {
       // 检查是否配置了Firebase
+      console.log('正在初始化Firebase...', {
+        apiKey: firebaseConfig.apiKey ? '已设置' : '未设置',
+        projectId: firebaseConfig.projectId ? '已设置' : '未设置',
+        apiKeyValue: firebaseConfig.apiKey?.substring(0, 10) + '...' || '未设置'
+      });
+      
       if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'your-api-key') {
-        console.warn('Firebase未配置，将使用本地存储');
+        console.warn('⚠️ Firebase未配置，将使用本地存储（数据不会跨设备同步）');
+        console.warn('请在Vercel中设置环境变量：VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID等');
         this.isInitialized = true;
         return;
       }
@@ -53,9 +60,10 @@ class FirebaseService {
       this.app = initializeApp(firebaseConfig);
       this.db = getFirestore(this.app);
       this.isInitialized = true;
-      console.log('Firebase初始化成功');
+      console.log('✅ Firebase初始化成功，跨设备同步已启用');
     } catch (error) {
-      console.error('Firebase初始化失败:', error);
+      console.error('❌ Firebase初始化失败:', error);
+      console.error('将回退到本地存储（数据不会跨设备同步）');
       this.isInitialized = true; // 标记为已初始化，避免重复尝试
     }
   }
