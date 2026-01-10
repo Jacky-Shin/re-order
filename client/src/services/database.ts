@@ -1,4 +1,3 @@
-import { SQLiteConnection, CapacitorSQLite, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { Capacitor } from '@capacitor/core';
 import { MenuItem, Order, Payment, MerchantBankAccount } from '../types';
 import { firebaseService } from './firebaseService';
