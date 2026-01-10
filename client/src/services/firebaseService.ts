@@ -384,12 +384,22 @@ class FirebaseService {
   onMenuItemsChange(callback: (items: MenuItem[]) => void): () => void {
     if (!this.isAvailable()) return () => {};
     
-    const q = query(collection(this.db!, 'menu_items'), orderBy('category'), orderBy('name'));
+    // 使用单个orderBy避免需要复合索引
+    const q = query(collection(this.db!, 'menu_items'), orderBy('category'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as MenuItem));
+      
+      // 在客户端按category和name排序
+      items.sort((a, b) => {
+        if (a.category !== b.category) {
+          return a.category.localeCompare(b.category);
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      
       callback(items);
     });
     

@@ -58,18 +58,58 @@
 
 ---
 
-## 方法3：使用在线控制台工具（最简单，但功能有限）
+## 方法3：使用Eruda移动端控制台（最简单，已添加！）
 
-### 使用Eruda控制台（推荐）
+### ✅ 已添加Eruda控制台工具
 
-我可以为您添加一个移动端调试工具，这样您就可以直接在iPad上查看控制台了。
+我已经为您添加了Eruda移动端控制台工具，现在您可以直接在iPad上查看控制台了！
 
-#### 步骤
+### 如何启用
 
-1. 我会在代码中添加Eruda（移动端控制台工具）
-2. 部署后，在iPad上打开应用
-3. 点击屏幕上的控制台图标
-4. 就可以查看日志了
+#### 方法A：通过URL参数（推荐）
+在iPad上访问：
+```
+https://re-order.vercel.app/admin?debug=true
+```
+
+#### 方法B：通过localStorage
+1. 在iPad上打开应用
+2. 在浏览器地址栏输入：`javascript:localStorage.setItem('eruda', 'true'); location.reload();`
+3. 页面会刷新，控制台会自动显示
+
+#### 方法C：开发环境自动启用
+在开发环境中，Eruda会自动启用。
+
+### 如何使用
+
+1. 部署完成后，在iPad上访问应用（添加 `?debug=true` 参数）
+2. 您会看到屏幕右下角有一个控制台图标
+3. 点击图标打开控制台
+4. 可以查看所有日志，包括：
+   - Firebase初始化日志
+   - 添加商品时的日志
+   - 所有错误和警告
+
+### 查看Firebase日志
+
+打开控制台后，您应该能看到：
+
+**如果Firebase已配置：**
+```
+🔧 正在初始化Firebase应用...
+🔧 正在初始化Firestore数据库...
+✅ Firebase初始化成功，跨设备同步已启用
+✅ Firebase配置: { projectId: "...", apiKey: "..." }
+📥 正在从Firebase读取商品列表...
+✅ 从Firebase成功获取 X 个商品
+```
+
+**如果Firebase未配置：**
+```
+⚠️ Firebase未配置，将使用本地存储（数据不会跨设备同步）
+⚠️ 请在Vercel中设置环境变量：VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID等
+环境变量检查: { apiKey: "未设置", projectId: "未设置", ... }
+```
 
 ---
 
