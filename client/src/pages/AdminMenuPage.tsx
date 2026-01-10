@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { MenuItem } from '../types';
 import { onDatabaseUpdate } from '../utils/storageSync';
+import { firebaseService } from '../services/firebaseService';
 
 export default function AdminMenuPage() {
   const navigate = useNavigate();
@@ -31,13 +32,27 @@ export default function AdminMenuPage() {
 
   // 监听数据库更新事件（当其他标签页修改数据时自动刷新）
   useEffect(() => {
-    const unsubscribe = onDatabaseUpdate((key) => {
+    const unsubscribes: (() => void)[] = [];
+    
+    // localStorage同步
+    const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
       if (key === 'db_menu_items') {
-        // 菜单数据更新，重新加载
         loadMenuItems();
       }
     });
-    return unsubscribe;
+    unsubscribes.push(localStorageUnsubscribe);
+    
+    // Firebase实时同步
+    if (firebaseService.isAvailable()) {
+      const firebaseUnsubscribe = firebaseService.onMenuItemsChange(() => {
+        loadMenuItems();
+      });
+      unsubscribes.push(firebaseUnsubscribe);
+    }
+    
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
   }, []);
 
   const loadMenuItems = async () => {

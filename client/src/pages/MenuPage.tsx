@@ -5,6 +5,7 @@ import { MenuItem } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
+import { firebaseService } from '../services/firebaseService';
 
 export default function MenuPage() {
   const [categories, setCategories] = useState<string[]>([]);
@@ -31,9 +32,11 @@ export default function MenuPage() {
 
   // 监听数据库更新事件（当商家后台修改数据时自动刷新）
   useEffect(() => {
-    const unsubscribe = onDatabaseUpdate((key: string) => {
+    const unsubscribes: (() => void)[] = [];
+    
+    // localStorage同步
+    const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
       if (key === 'db_menu_items') {
-        // 菜单数据更新，重新加载
         loadCategories();
         if (selectedCategory) {
           loadMenuByCategory(selectedCategory);
@@ -42,7 +45,24 @@ export default function MenuPage() {
         }
       }
     });
-    return unsubscribe;
+    unsubscribes.push(localStorageUnsubscribe);
+    
+    // Firebase实时同步
+    if (firebaseService.isAvailable()) {
+      const firebaseUnsubscribe = firebaseService.onMenuItemsChange(() => {
+        loadCategories();
+        if (selectedCategory) {
+          loadMenuByCategory(selectedCategory);
+        } else {
+          loadAllMenu();
+        }
+      });
+      unsubscribes.push(firebaseUnsubscribe);
+    }
+    
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
   }, [selectedCategory]);
 
   const loadCategories = async () => {

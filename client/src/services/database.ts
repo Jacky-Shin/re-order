@@ -1,6 +1,7 @@
 import { SQLiteConnection, CapacitorSQLite, SQLiteDBConnection } from '@capacitor-community/sqlite';
 import { Capacitor } from '@capacitor/core';
 import { MenuItem, Order, Payment, MerchantBankAccount } from '../types';
+import { firebaseService } from './firebaseService';
 
 /**
  * 数据库服务类
@@ -18,14 +19,21 @@ class DatabaseService {
     if (this.isInitialized) return;
 
     try {
+      // 首先尝试初始化Firebase（用于跨设备同步）
+      await firebaseService.initialize();
+      
       if (Capacitor.getPlatform() === 'web') {
-        // Web环境：使用localStorage作为fallback（开发测试用）
-        console.warn('Web环境：使用localStorage作为数据库（仅用于开发测试）');
+        // Web环境：优先使用Firebase，否则使用localStorage
+        if (firebaseService.isAvailable()) {
+          console.log('Web环境：使用Firebase进行跨设备数据同步');
+        } else {
+          console.warn('Web环境：Firebase未配置，使用localStorage作为数据库（仅用于开发测试）');
+        }
         this.isInitialized = true;
         return;
       }
 
-      // 移动端环境：使用SQLite
+      // 移动端环境：使用SQLite（本地存储）+ Firebase（同步）
       this.sqlite = new SQLiteConnection(CapacitorSQLite);
       this.db = await this.sqlite.createConnection(
         'starbucks_db',
@@ -37,7 +45,7 @@ class DatabaseService {
       await this.db.open();
       await this.createTables();
       this.isInitialized = true;
-      console.log('数据库初始化成功');
+      console.log('数据库初始化成功（SQLite + Firebase同步）');
     } catch (error) {
       console.error('数据库初始化失败:', error);
       throw error;
@@ -155,6 +163,10 @@ class DatabaseService {
 
   async getMenuItemById(id: string): Promise<MenuItem | null> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getMenuItemById(id);
+      }
       const items = await this.getMenuItemsFromStorage();
       return items.find(item => item.id === id) || null;
     }
@@ -167,6 +179,13 @@ class DatabaseService {
 
   async addMenuItem(item: MenuItem): Promise<MenuItem> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        await firebaseService.addMenuItem(item);
+        // 同时保存到localStorage作为备份
+        await this.addMenuItemToStorage(item);
+        return item;
+      }
       return this.addMenuItemToStorage(item);
     }
     if (!this.db) throw new Error('数据库未初始化');
@@ -187,6 +206,16 @@ class DatabaseService {
         JSON.stringify(item.customizations || []),
       ]
     );
+    
+    // 如果Firebase可用，同步到Firebase
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.addMenuItem(item);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+    
     return item;
   }
 
@@ -252,11 +281,24 @@ class DatabaseService {
 
   async deleteMenuItem(id: string): Promise<void> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        await firebaseService.deleteMenuItem(id);
+      }
       return this.deleteMenuItemFromStorage(id);
     }
     if (!this.db) throw new Error('数据库未初始化');
 
     await this.db.run('DELETE FROM menu_items WHERE id = ?', [id]);
+    
+    // 如果Firebase可用，同步到Firebase
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.deleteMenuItem(id);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
   }
 
   async getCategories(): Promise<string[]> {
@@ -285,6 +327,10 @@ class DatabaseService {
 
   async getOrderById(id: string): Promise<Order | null> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getOrderById(id);
+      }
       const orders = await this.getOrdersFromStorage();
       return orders.find(order => order.id === id) || null;
     }
@@ -309,6 +355,13 @@ class DatabaseService {
 
   async addOrder(order: Order): Promise<Order> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        await firebaseService.addOrder(order);
+        // 同时保存到localStorage作为备份
+        await this.addOrderToStorage(order);
+        return order;
+      }
       return this.addOrderToStorage(order);
     }
     if (!this.db) throw new Error('数据库未初始化');
@@ -334,11 +387,28 @@ class DatabaseService {
         order.createdAt,
       ]
     );
+    
+    // 如果Firebase可用，同步到Firebase
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.addOrder(order);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+    
     return order;
   }
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        const updated = await firebaseService.updateOrder(id, updates);
+        // 同时更新localStorage作为备份
+        await this.updateOrderInStorage(id, updates);
+        return updated;
+      }
       return this.updateOrderInStorage(id, updates);
     }
     if (!this.db) throw new Error('数据库未初始化');
@@ -390,6 +460,16 @@ class DatabaseService {
 
     const updated = await this.getOrderById(id);
     if (!updated) throw new Error('更新失败');
+    
+    // 如果Firebase可用，同步到Firebase
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.updateOrder(id, updates);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+    
     return updated;
   }
 
@@ -475,6 +555,10 @@ class DatabaseService {
 
   async getMerchantAccounts(): Promise<MerchantBankAccount[]> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getMerchantAccounts();
+      }
       return this.getMerchantAccountsFromStorage();
     }
     if (!this.db) throw new Error('数据库未初始化');
@@ -502,6 +586,12 @@ class DatabaseService {
 
   async addMerchantAccount(account: MerchantBankAccount): Promise<MerchantBankAccount> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        await firebaseService.addMerchantAccount(account);
+        await this.addMerchantAccountToStorage(account);
+        return account;
+      }
       return this.addMerchantAccountToStorage(account);
     }
     if (!this.db) throw new Error('数据库未初始化');
@@ -525,6 +615,16 @@ class DatabaseService {
         account.isDefault ? 1 : 0,
       ]
     );
+    
+    // 如果Firebase可用，同步到Firebase
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.addMerchantAccount(account);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+    
     return account;
   }
 
