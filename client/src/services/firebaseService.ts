@@ -78,17 +78,38 @@ class FirebaseService {
   // ==================== 菜单项操作 ====================
 
   async getMenuItems(): Promise<MenuItem[]> {
-    if (!this.isAvailable()) return [];
+    if (!this.isAvailable()) {
+      console.warn('⚠️ Firebase不可用，无法从Firebase获取菜单项');
+      return [];
+    }
     
     try {
-      const q = query(collection(this.db!, 'menu_items'), orderBy('category'), orderBy('name'));
+      console.log('📥 正在从Firebase读取商品列表...');
+      // 使用单个orderBy避免需要复合索引
+      // 先按category排序，然后在客户端按name排序
+      const q = query(collection(this.db!, 'menu_items'), orderBy('category'));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({
+      const items = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as MenuItem));
+      
+      // 在客户端按category和name排序
+      items.sort((a, b) => {
+        if (a.category !== b.category) {
+          return a.category.localeCompare(b.category);
+        }
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      
+      console.log(`✅ 从Firebase成功获取 ${items.length} 个商品`);
+      return items;
     } catch (error) {
-      console.error('获取菜单项失败:', error);
+      console.error('❌ 从Firebase获取菜单项失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return [];
     }
   }
