@@ -110,9 +110,18 @@ class FirebaseService {
   }
 
   async addMenuItem(item: MenuItem): Promise<MenuItem> {
-    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    if (!this.isAvailable()) {
+      console.error('❌ Firebase不可用，无法添加菜单项');
+      throw new Error('Firebase未配置');
+    }
     
     try {
+      console.log('📤 正在添加商品到Firebase...', {
+        id: item.id,
+        name: item.name,
+        category: item.category
+      });
+      
       await setDoc(doc(this.db!, 'menu_items', item.id), {
         name: item.name,
         nameEn: item.nameEn || '',
@@ -125,9 +134,15 @@ class FirebaseService {
         customizations: item.customizations || [],
         createdAt: Timestamp.now()
       });
+      
+      console.log('✅ 商品已成功添加到Firebase:', item.id);
       return item;
     } catch (error) {
-      console.error('添加菜单项失败:', error);
+      console.error('❌ 添加菜单项到Firebase失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }

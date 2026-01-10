@@ -185,21 +185,30 @@ class DatabaseService {
   async addMenuItem(item: MenuItem): Promise<MenuItem> {
     if (Capacitor.getPlatform() === 'web') {
       // Web环境：优先使用Firebase，否则使用localStorage
-      console.log('添加商品到数据库...', { itemId: item.id, itemName: item.name });
+      console.log('📝 添加商品到数据库...', { 
+        itemId: item.id, 
+        itemName: item.name,
+        firebaseAvailable: firebaseService.isAvailable()
+      });
       
       if (firebaseService.isAvailable()) {
-        console.log('✅ 使用Firebase同步（跨设备）');
+        console.log('✅ Firebase可用，使用Firebase同步（跨设备）');
         try {
           await firebaseService.addMenuItem(item);
-          console.log('✅ 商品已同步到Firebase');
+          console.log('✅ 商品已成功同步到Firebase');
+          // 同时保存到localStorage作为备份
+          await this.addMenuItemToStorage(item);
+          console.log('✅ 商品已保存到本地备份');
+          return item;
         } catch (error) {
-          console.error('❌ Firebase同步失败:', error);
+          console.error('❌ Firebase同步失败，错误详情:', error);
+          console.warn('⚠️ 回退到本地存储（不会跨设备同步）');
+          // 如果Firebase失败，至少保存到本地
+          return this.addMenuItemToStorage(item);
         }
-        // 同时保存到localStorage作为备份
-        await this.addMenuItemToStorage(item);
-        return item;
       } else {
         console.warn('⚠️ Firebase不可用，仅保存到本地存储（不会跨设备同步）');
+        console.warn('⚠️ 请检查Vercel环境变量是否已正确设置');
         return this.addMenuItemToStorage(item);
       }
     }
