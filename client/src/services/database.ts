@@ -7,8 +7,8 @@ import { firebaseService } from './firebaseService';
  * 使用SQLite作为本地数据库存储
  */
 class DatabaseService {
-  private db: SQLiteDBConnection | null = null;
-  private sqlite: SQLiteConnection | null = null;
+  private db: any = null; // SQLite only used in native apps (not in web)
+  // private sqlite: any = null; // SQLite only used in native apps (not in web) - removed for web deployment
   private isInitialized = false;
 
   /**
@@ -43,9 +43,13 @@ class DatabaseService {
   }
 
   /**
-   * 创建数据表
+   * 创建数据表（仅在原生应用中使用）
+   * Note: This method is not used in web deployment
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async createTables(): Promise<void> {
+    // SQLite tables only needed in native apps
+    // For web, we use Firebase + localStorage
     if (!this.db) return;
 
     try {

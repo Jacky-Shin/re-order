@@ -1,5 +1,3 @@
-import { Capacitor } from '@capacitor/core';
-
 /**
  * 图片存储服务
  * 在Web环境中使用Base64存储（存储在Firebase/localStorage中）
@@ -9,7 +7,7 @@ class ImageStorageService {
    * 保存图片（Base64格式）
    * Web环境：直接返回Base64数据，存储在数据库中
    */
-  async saveImage(imageData: string, filename?: string): Promise<string> {
+  async saveImage(imageData: string, _filename?: string): Promise<string> {
     // Web环境：直接返回Base64数据
     // 图片会存储在Firebase或localStorage中
     return imageData;
@@ -28,7 +26,7 @@ class ImageStorageService {
    * 删除图片
    * Web环境：图片存储在数据库中，删除由数据库处理
    */
-  async deleteImage(filename: string): Promise<void> {
+  async deleteImage(_filename: string): Promise<void> {
     // Web环境：图片存储在数据库中，删除由数据库处理
   }
 
