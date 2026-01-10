@@ -143,13 +143,34 @@ export default function AdminMenuPage() {
 
     setUploading(true);
     try {
+      // 检查是否在Web环境（没有后端服务器）
+      // 在Vercel部署的PWA中，使用Base64存储
+      const isWebEnvironment = !window.location.hostname.includes('localhost') || 
+                                window.location.protocol === 'https:';
+
+      if (isWebEnvironment) {
+        // Web环境：转换为Base64并直接返回（存储到数据库时会自动保存）
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64Data = reader.result as string;
+            // 直接返回Base64 Data URL，可以存储在数据库中
+            resolve(base64Data);
+          };
+          reader.onerror = () => {
+            reject(new Error('读取图片失败，请重试'));
+          };
+          reader.readAsDataURL(imageFile);
+        });
+      }
+
+      // 本地开发环境：尝试上传到服务器
       const formDataToSend = new FormData();
       formDataToSend.append('image', imageFile);
 
       const response = await fetch('/api/upload/image', {
         method: 'POST',
         body: formDataToSend,
-        // 不要设置Content-Type，让浏览器自动设置（包含boundary）
       });
 
       if (!response.ok) {
@@ -172,7 +193,17 @@ export default function AdminMenuPage() {
       console.error('上传图片失败:', error);
       // 提供更详细的错误信息
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('网络连接失败，请检查后端服务是否运行');
+        // 如果网络失败，回退到Base64
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve(reader.result as string);
+          };
+          reader.onerror = () => {
+            reject(new Error('读取图片失败，请重试'));
+          };
+          reader.readAsDataURL(imageFile!);
+        });
       }
       throw error;
     } finally {
