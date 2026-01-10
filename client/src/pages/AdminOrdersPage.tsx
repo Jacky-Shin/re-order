@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { Order } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { onDatabaseUpdate } from '../utils/storageSync';
 
 export default function AdminOrdersPage() {
   const navigate = useNavigate();
@@ -14,6 +15,17 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     loadOrders();
+  }, []);
+
+  // 监听数据库更新事件（当用户下单时自动刷新）
+  useEffect(() => {
+    const unsubscribe = onDatabaseUpdate((key) => {
+      if (key === 'db_orders') {
+        // 订单数据更新，重新加载
+        loadOrders();
+      }
+    });
+    return unsubscribe;
   }, []);
 
   const loadOrders = async () => {

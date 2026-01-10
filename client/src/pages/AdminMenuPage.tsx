@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { MenuItem } from '../types';
+import { onDatabaseUpdate } from '../utils/storageSync';
 
 export default function AdminMenuPage() {
   const navigate = useNavigate();
@@ -26,6 +27,17 @@ export default function AdminMenuPage() {
 
   useEffect(() => {
     loadMenuItems();
+  }, []);
+
+  // 监听数据库更新事件（当其他标签页修改数据时自动刷新）
+  useEffect(() => {
+    const unsubscribe = onDatabaseUpdate((key) => {
+      if (key === 'db_menu_items') {
+        // 菜单数据更新，重新加载
+        loadMenuItems();
+      }
+    });
+    return unsubscribe;
   }, []);
 
   const loadMenuItems = async () => {

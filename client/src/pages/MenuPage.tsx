@@ -4,6 +4,7 @@ import { menuApi } from '../api/client';
 import { MenuItem } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { onDatabaseUpdate } from '../utils/storageSync';
 
 export default function MenuPage() {
   const [categories, setCategories] = useState<string[]>([]);
@@ -26,6 +27,22 @@ export default function MenuPage() {
     } else {
       loadAllMenu();
     }
+  }, [selectedCategory]);
+
+  // 监听数据库更新事件（当商家后台修改数据时自动刷新）
+  useEffect(() => {
+    const unsubscribe = onDatabaseUpdate((key: string) => {
+      if (key === 'db_menu_items') {
+        // 菜单数据更新，重新加载
+        loadCategories();
+        if (selectedCategory) {
+          loadMenuByCategory(selectedCategory);
+        } else {
+          loadAllMenu();
+        }
+      }
+    });
+    return unsubscribe;
   }, [selectedCategory]);
 
   const loadCategories = async () => {

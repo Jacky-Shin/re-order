@@ -3,6 +3,12 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { LanguageProvider } from './contexts/LanguageContext'
+import { setupStorageSync } from './utils/storageSync'
+
+// Setup storage sync for Web environment
+if (typeof window !== 'undefined') {
+  setupStorageSync();
+}
 
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
