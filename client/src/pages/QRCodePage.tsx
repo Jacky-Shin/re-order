@@ -6,7 +6,9 @@ export default function QRCodePage() {
   const [baseUrl, setBaseUrl] = useState(() => {
     // 获取当前页面的基础URL
     if (typeof window !== 'undefined') {
-      return `${window.location.protocol}//${window.location.host}`;
+      const url = `${window.location.protocol}//${window.location.host}`;
+      // 确保URL不包含路径
+      return url;
     }
     return 'http://localhost:3000';
   });
