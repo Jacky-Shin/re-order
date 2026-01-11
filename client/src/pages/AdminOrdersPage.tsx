@@ -244,7 +244,7 @@ export default function AdminOrdersPage() {
                     {/* 现金支付标识 */}
                     {order.paymentMethod === 'cash' && (
                       <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
-                        <span className="font-semibold text-yellow-600">💵 {t('admin.orders.cashPayment')}</span>
+                        <span className="font-semibold text-yellow-600">💵 {t('payment.cashPayment')}</span>
                         <span className="font-semibold text-yellow-600">¥{order.totalAmount.toFixed(2)}</span>
                       </div>
                     )}

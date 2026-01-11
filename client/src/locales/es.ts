@@ -82,6 +82,7 @@ export default {
     card: 'Tarjeta Bancaria',
     visa: 'Visa',
     cash: 'Efectivo',
+    cashPayment: 'Pago en Efectivo',
     cardNumber: 'Número de Tarjeta',
     cardNumberPlaceholder: 'Ingrese el número de tarjeta',
     expiryDate: 'Fecha de Vencimiento',

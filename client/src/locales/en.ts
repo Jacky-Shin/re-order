@@ -82,6 +82,7 @@ export default {
     card: 'Bank Card',
     visa: 'Visa',
     cash: 'Cash',
+    cashPayment: 'Cash Payment',
     cardNumber: 'Card Number',
     cardNumberPlaceholder: 'Enter card number',
     expiryDate: 'Expiry Date',

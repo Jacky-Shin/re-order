@@ -82,6 +82,7 @@ export default {
     card: '银行卡',
     visa: 'Visa',
     cash: '现金',
+    cashPayment: '现金支付',
     cardNumber: '卡号',
     cardNumberPlaceholder: '请输入卡号',
     expiryDate: '有效期',
