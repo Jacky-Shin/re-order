@@ -135,11 +135,22 @@ export const adminApi = {
   },
   getAllOrders: async () => new ApiResponse(await localApiService.getAllOrders()),
   updateOrderStatus: async (id: string, status: Order['status']) => {
-    return new ApiResponse(await localApiService.updateOrderStatus(id, status));
+    try {
+      const order = await localApiService.updateOrderStatus(id, status);
+      return new ApiResponse(order);
+    } catch (error: any) {
+      console.error('❌ updateOrderStatus API错误:', error);
+      throw error;
+    }
   },
   notifyCustomer: async (id: string) => {
-    const order = await localApiService.notifyCustomer(id);
-    return new ApiResponse({ success: true, message: '客户已通知', order });
+    try {
+      const order = await localApiService.notifyCustomer(id);
+      return new ApiResponse({ success: true, message: '客户已通知', order });
+    } catch (error: any) {
+      console.error('❌ notifyCustomer API错误:', error);
+      throw error;
+    }
   },
   getOrderStats: async () => new ApiResponse(await localApiService.getOrderStats()),
   getPayments: async () => new ApiResponse(await localApiService.getAllPayments()),
