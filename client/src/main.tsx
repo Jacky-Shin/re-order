@@ -1,11 +1,11 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { LanguageProvider } from './contexts/LanguageContext'
-import { setupStorageSync } from './utils/storageSync'
-import { firebaseService } from './services/firebaseService'
-import { checkFirebaseStatus } from './utils/firebaseDebug'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { setupStorageSync } from './utils/storageSync';
+import { firebaseService } from './services/firebaseService';
+import { checkFirebaseStatus } from './utils/firebaseDebug';
 
 // 初始化移动端控制台工具（Eruda）
 // 可以通过URL参数 ?debug=true 或 localStorage.setItem('eruda', 'true') 启用
@@ -45,21 +45,11 @@ if (typeof window !== 'undefined') {
     });
 }
 
-// Service Worker 暂时禁用，避免错误
-// 如果需要 PWA 功能，可以稍后重新启用
-if (false && 'serviceWorker' in navigator) {
-  // 先注销所有现有的 Service Worker
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((registration) => {
-      registration.unregister().catch(() => {});
-    });
-  }).catch(() => {});
-}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <LanguageProvider>
       <App />
     </LanguageProvider>
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);

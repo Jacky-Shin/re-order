@@ -1,7 +1,7 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './contexts/CartContext';
-import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { useLanguage } from './contexts/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ScanPage from './pages/ScanPage';
 import MenuPage from './pages/MenuPage';
@@ -27,7 +27,7 @@ function AppRoutes() {
   // 检测是否是admin路由
   const isAdminRoute = location.pathname.startsWith('/admin') || location.pathname.startsWith('/merchant');
   
-  React.useEffect(() => {
+  useEffect(() => {
     setIsAdmin(isAdminRoute);
   }, [isAdminRoute, setIsAdmin]);
 
@@ -55,13 +55,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </CartProvider>
-    </LanguageProvider>
+    <CartProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </CartProvider>
   );
 }
 
