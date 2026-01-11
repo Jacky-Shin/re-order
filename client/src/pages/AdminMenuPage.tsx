@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { adminApi } from '../api/client';
-import { MenuItem, Category } from '../types';
+import { MenuItem, Category, SizeOption, Customization, CustomizationOption } from '../types';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function AdminMenuPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [salesCounts, setSalesCounts] = useState<Record<string, number>>({});
@@ -289,6 +292,34 @@ export default function AdminMenuPage() {
     return category ? category.name : categoryId;
   };
 
+  // 计算价格范围（基础价格 + 最小/最大选项价格）
+  const calculatePriceRange = () => {
+    const basePrice = formData.price || 0;
+    let minPrice = basePrice;
+    let maxPrice = basePrice;
+
+    // 计算自定义选项的价格范围
+    if (formData.customizations && formData.customizations.length > 0) {
+      formData.customizations.forEach(customization => {
+        if (customization.options && customization.options.length > 0) {
+          const optionPrices = customization.options.map(opt => opt.price);
+          const minOptionPrice = Math.min(...optionPrices);
+          const maxOptionPrice = Math.max(...optionPrices);
+          // 必选项必须选择一个，所以加上最小/最大价格
+          if (customization.required) {
+            minPrice += minOptionPrice;
+            maxPrice += maxOptionPrice;
+          } else {
+            // 可选项可以选择不选（价格为0），所以只影响最大价格
+            maxPrice += maxOptionPrice;
+          }
+        }
+      });
+    }
+
+    return { minPrice, maxPrice };
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -375,7 +406,7 @@ export default function AdminMenuPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    价格 <span className="text-red-500">*</span>
+                    基础价格 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -386,6 +417,21 @@ export default function AdminMenuPage() {
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
                   />
+                  {formData.price > 0 && formData.customizations?.length && (
+                    <div className="mt-2 p-2 bg-sb-light-green rounded-lg">
+                      <p className="text-xs text-gray-600 mb-1">价格范围预览：</p>
+                      {(() => {
+                        const { minPrice, maxPrice } = calculatePriceRange();
+                        return minPrice === maxPrice ? (
+                          <p className="text-sm font-semibold text-sb-green">¥{minPrice.toFixed(2)}</p>
+                        ) : (
+                          <p className="text-sm font-semibold text-sb-green">
+                            ¥{minPrice.toFixed(2)} - ¥{maxPrice.toFixed(2)}
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -486,6 +532,154 @@ export default function AdminMenuPage() {
                 <label htmlFor="available" className="ml-2 text-sm text-gray-700">
                   上架状态
                 </label>
+              </div>
+
+              {/* 自定义商品属性 */}
+              <div className="border-t pt-4">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    商品属性（完全自定义）
+                  </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    {t('admin.menu.example')}
+                  </p>
+                </div>
+                <div className="flex items-center justify-end mb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newCustomizations = [
+                        ...(formData.customizations || []),
+                        {
+                          id: uuidv4(),
+                          name: '',
+                          options: [],
+                          required: false,
+                        },
+                      ];
+                      setFormData({ ...formData, customizations: newCustomizations });
+                    }}
+                    className="px-3 py-1 text-sm bg-sb-green text-white rounded-lg hover:bg-opacity-90"
+                  >
+                    {t('admin.menu.addCustomization')}
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {formData.customizations?.map((customization, customizationIndex) => (
+                    <div key={customization.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3 flex-1">
+                          <input
+                            type="text"
+                            placeholder={t('admin.menu.customizationName')}
+                            value={customization.name}
+                            onChange={(e) => {
+                              const newCustomizations = [...(formData.customizations || [])];
+                              newCustomizations[customizationIndex].name = e.target.value;
+                              setFormData({ ...formData, customizations: newCustomizations });
+                            }}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
+                          />
+                          <label className="flex items-center gap-2 whitespace-nowrap">
+                            <input
+                              type="checkbox"
+                              checked={customization.required}
+                              onChange={(e) => {
+                                const newCustomizations = [...(formData.customizations || [])];
+                                newCustomizations[customizationIndex].required = e.target.checked;
+                                setFormData({ ...formData, customizations: newCustomizations });
+                              }}
+                              className="w-4 h-4 text-sb-green border-gray-300 rounded focus:ring-sb-green"
+                            />
+                            <span className="text-sm text-gray-700">{t('admin.menu.required')}</span>
+                          </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newCustomizations = formData.customizations?.filter(
+                              (_, i) => i !== customizationIndex
+                            ) || [];
+                            setFormData({ ...formData, customizations: newCustomizations });
+                          }}
+                          className="ml-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
+                          {t('admin.menu.removeCustomization')}
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-gray-500">选项列表</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCustomizations = [...(formData.customizations || [])];
+                              newCustomizations[customizationIndex].options = [
+                                ...newCustomizations[customizationIndex].options,
+                                {
+                                  id: uuidv4(),
+                                  name: '',
+                                  price: 0,
+                                },
+                              ];
+                              setFormData({ ...formData, customizations: newCustomizations });
+                            }}
+                            className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          >
+                            {t('admin.menu.addOption')}
+                          </button>
+                        </div>
+                        {customization.options.map((option, optionIndex) => (
+                          <div key={option.id} className="flex gap-2 items-center">
+                            <input
+                              type="text"
+                              placeholder={t('admin.menu.optionName')}
+                              value={option.name}
+                              onChange={(e) => {
+                                const newCustomizations = [...(formData.customizations || [])];
+                                newCustomizations[customizationIndex].options[optionIndex].name =
+                                  e.target.value;
+                                setFormData({ ...formData, customizations: newCustomizations });
+                              }}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
+                            />
+                            <input
+                              type="number"
+                              placeholder={t('admin.menu.optionPrice')}
+                              value={option.price}
+                              onChange={(e) => {
+                                const newCustomizations = [...(formData.customizations || [])];
+                                newCustomizations[customizationIndex].options[optionIndex].price =
+                                  parseFloat(e.target.value) || 0;
+                                setFormData({ ...formData, customizations: newCustomizations });
+                              }}
+                              step="0.01"
+                              className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newCustomizations = [...(formData.customizations || [])];
+                                newCustomizations[customizationIndex].options = newCustomizations[
+                                  customizationIndex
+                                ].options.filter((_, i) => i !== optionIndex);
+                                setFormData({ ...formData, customizations: newCustomizations });
+                              }}
+                              className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            >
+                              {t('admin.menu.removeOption')}
+                            </button>
+                          </div>
+                        ))}
+                        {customization.options.length === 0 && (
+                          <p className="text-xs text-gray-400 italic">
+                            点击"添加选项"为此属性组添加选项
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="flex gap-3">
