@@ -13,13 +13,11 @@ export default function LanguageSwitcher({ variant = 'dark' }: LanguageSwitcherP
     { code: 'es' as const, label: 'Español', short: 'es', color: 'bg-green-500', hoverColor: 'hover:bg-green-600' },
   ];
 
-  const currentIndex = languages.findIndex(lang => lang.code === language);
-
   if (variant === 'light') {
     // 用户端浅色背景样式 - 分段控制器样式
     return (
       <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200 shadow-sm">
-        {languages.map((lang, index) => (
+        {languages.map((lang) => (
           <button
             key={lang.code}
             onClick={() => setLanguage(lang.code)}
