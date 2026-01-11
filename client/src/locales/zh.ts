@@ -29,6 +29,8 @@ export default {
     viewDetails: '查看详情',
     empty: '暂无商品',
     admin: '商家后台',
+    items: '项',
+    soldOut: '已售罄',
   },
   // 购物车
   cart: {

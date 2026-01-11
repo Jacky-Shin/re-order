@@ -8,6 +8,7 @@ import { dirname } from 'path';
 import { MenuItem } from '../types.js';
 import { getOrders } from '../data/orderData.js';
 import { getPayments } from '../data/paymentData.js';
+import { getShopSettings, updateShopSettings } from '../data/shopSettingsData.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -293,5 +294,28 @@ adminRouter.get('/orders/stats', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('获取订单统计详情失败:', error);
     res.status(500).json({ error: '获取订单统计详情失败' });
+  }
+});
+
+// 获取店铺设置
+adminRouter.get('/shop-settings', async (req: Request, res: Response) => {
+  try {
+    const settings = await getShopSettings();
+    res.json(settings);
+  } catch (error) {
+    console.error('获取店铺设置失败:', error);
+    res.status(500).json({ error: '获取店铺设置失败' });
+  }
+});
+
+// 更新店铺设置
+adminRouter.put('/shop-settings', async (req: Request, res: Response) => {
+  try {
+    const updates = req.body;
+    const updated = await updateShopSettings(updates);
+    res.json(updated);
+  } catch (error) {
+    console.error('更新店铺设置失败:', error);
+    res.status(500).json({ error: '更新店铺设置失败' });
   }
 });

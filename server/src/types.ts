@@ -90,3 +90,15 @@ export interface MerchantBankAccount {
   isDefault: boolean;
   createdAt: string;
 }
+
+export interface ShopSettings {
+  id: string;
+  name: string;
+  nameEn?: string;
+  description?: string;
+  descriptionEn?: string;
+  bannerImages: string[]; // 商铺顶部展示图片（可多张）
+  logo?: string; // 店铺Logo
+  createdAt: string;
+  updatedAt: string;
+}

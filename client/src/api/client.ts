@@ -1,4 +1,4 @@
-import { MenuItem, CartItem, Order, Payment, PaymentMethod, MerchantBankAccount, Category } from '../types';
+import { MenuItem, CartItem, Order, Payment, PaymentMethod, MerchantBankAccount, Category, ShopSettings } from '../types';
 import { useLocalApi } from '../config/environment';
 import * as localApi from '../services/apiAdapter';
 import axios, { AxiosInstance } from 'axios';
@@ -119,4 +119,7 @@ export const adminApi = useLocal ? localApi.adminApi : {
   updateCategoryOrder: (categoryIds: string[]) => httpApi!.post('/admin/categories/order', { categoryIds }),
   // 销量统计
   getMenuItemSalesCounts: () => httpApi!.get<Record<string, number>>('/admin/menu/sales'),
+  // 店铺设置
+  getShopSettings: () => httpApi!.get<ShopSettings>('/admin/shop-settings'),
+  updateShopSettings: (updates: Partial<ShopSettings>) => httpApi!.put<ShopSettings>('/admin/shop-settings', updates),
 };

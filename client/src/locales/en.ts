@@ -29,6 +29,8 @@ export default {
     viewDetails: 'View Details',
     empty: 'No items available',
     admin: 'Admin Panel',
+    items: 'items',
+    soldOut: 'Sold Out',
   },
   // Shopping cart
   cart: {

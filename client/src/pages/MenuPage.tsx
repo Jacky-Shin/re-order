@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { menuApi, categoryApi } from '../api/client';
-import { MenuItem, Category } from '../types';
+import { menuApi, categoryApi, adminApi } from '../api/client';
+import { MenuItem, Category, ShopSettings } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
@@ -12,6 +12,9 @@ export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [allMenuItems, setAllMenuItems] = useState<MenuItem[]>([]); // 保存所有商品用于搜索
+  const [shopSettings, setShopSettings] = useState<ShopSettings | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -21,15 +24,36 @@ export default function MenuPage() {
 
   useEffect(() => {
     loadCategories();
+    loadShopSettings();
   }, []);
 
   useEffect(() => {
-    if (selectedCategoryId) {
+    if (selectedCategoryId && !searchQuery) {
       loadMenuByCategory(selectedCategoryId);
-    } else {
+    } else if (!searchQuery) {
       loadAllMenu();
     }
   }, [selectedCategoryId]);
+
+  // 搜索功能
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const filtered = allMenuItems.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.nameEn.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query)
+      );
+      setMenuItems(filtered);
+    } else {
+      // 恢复原始显示
+      if (selectedCategoryId) {
+        loadMenuByCategory(selectedCategoryId);
+      } else {
+        loadAllMenu();
+      }
+    }
+  }, [searchQuery]);
 
   // 监听数据库更新事件（当商家后台修改数据时自动刷新）
   useEffect(() => {
@@ -79,10 +103,20 @@ export default function MenuPage() {
     }
   };
 
+  const loadShopSettings = async () => {
+    try {
+      const response = await adminApi.getShopSettings();
+      setShopSettings(response.data);
+    } catch (error) {
+      console.error('加载店铺设置失败:', error);
+    }
+  };
+
   const loadAllMenu = async () => {
     try {
       setLoading(true);
       const response = await menuApi.getAll();
+      setAllMenuItems(response.data);
       setMenuItems(response.data);
     } catch (error) {
       console.error('加载菜单失败:', error);
@@ -96,6 +130,9 @@ export default function MenuPage() {
       setLoading(true);
       const response = await menuApi.getByCategory(categoryId);
       setMenuItems(response.data);
+      // 更新allMenuItems以保持搜索功能
+      const allResponse = await menuApi.getAll();
+      setAllMenuItems(allResponse.data);
     } catch (error) {
       console.error('加载菜单失败:', error);
     } finally {
@@ -103,8 +140,58 @@ export default function MenuPage() {
     }
   };
 
+  // 按分类分组商品，并按分类order排序
+  const getMenuItemsByCategory = () => {
+    const sortedCategories = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
+    const itemsByCategory = new Map<string, MenuItem[]>();
+    
+    // 初始化所有分类
+    sortedCategories.forEach(cat => {
+      itemsByCategory.set(cat.id, []);
+    });
+    
+    // 将商品分配到对应分类
+    menuItems.forEach(item => {
+      const categoryItems = itemsByCategory.get(item.category) || [];
+      categoryItems.push(item);
+      itemsByCategory.set(item.category, categoryItems);
+    });
+    
+    return sortedCategories.map(cat => ({
+      category: cat,
+      items: itemsByCategory.get(cat.id) || []
+    })).filter(group => group.items.length > 0); // 只显示有商品的分类
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sb-light-green/30 via-white to-gray-50 pb-24">
+      {/* 店铺图片 - 顶部展示 */}
+      {shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 && (
+        <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
+          <img
+            src={shopSettings.bannerImages[0]}
+            alt="店铺图片"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=店铺图片';
+            }}
+          />
+          {/* 如果有多张图片，显示指示器 */}
+          {shopSettings.bannerImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+              {shopSettings.bannerImages.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full ${
+                    index === 0 ? 'bg-white' : 'bg-white/50'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header - 现代化设计 */}
       <div className="bg-gradient-to-r from-sb-green via-sb-green to-sb-dark-green text-white sticky top-0 z-20 shadow-lg">
         <div className="backdrop-blur-sm bg-white/5">
@@ -114,7 +201,7 @@ export default function MenuPage() {
                 <span className="text-2xl">☕</span>
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight">{t('menu.title')}</h1>
+                <h1 className="text-xl font-bold tracking-tight">{shopSettings?.name || t('menu.title')}</h1>
                 {tableNumber && (
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs opacity-90 bg-white/20 px-2 py-0.5 rounded-full">
@@ -144,6 +231,32 @@ export default function MenuPage() {
         </div>
       </div>
 
+      {/* 搜索框 */}
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="搜索商品..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 focus:border-sb-green focus:ring-2 focus:ring-sb-green/20 transition-all"
+          />
+          <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
         {/* Categories - 现代化侧边栏 */}
         <div className="card sticky top-[88px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto w-40 flex-shrink-0 hidden md:block">
@@ -169,7 +282,7 @@ export default function MenuPage() {
           </div>
         </div>
 
-        {/* Menu Items - 高级卡片网格 */}
+        {/* Menu Items - 按分类分组展示 */}
         <div className="flex-1 min-w-0">
         {loading ? (
           <div className="text-center py-20">
@@ -181,7 +294,8 @@ export default function MenuPage() {
             <div className="text-6xl mb-4">🍽️</div>
             <p className="text-gray-500 text-lg">{t('menu.empty')}</p>
           </div>
-        ) : (
+        ) : searchQuery ? (
+          // 搜索结果显示
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {menuItems.map((item, index) => (
               <div
@@ -199,17 +313,9 @@ export default function MenuPage() {
                       (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   {!item.available && (
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">{t('menu.empty')}</span>
-                    </div>
-                  )}
-                  {item.available && (
-                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <svg className="w-4 h-4 text-sb-green" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      <span className="text-white font-bold text-lg">{t('menu.soldOut')}</span>
                     </div>
                   )}
                 </div>
@@ -231,6 +337,83 @@ export default function MenuPage() {
                 </div>
               </div>
             ))}
+            {menuItems.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500">未找到相关商品</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {(() => {
+              const menuGroups = getMenuItemsByCategory();
+              const displayGroups = selectedCategoryId 
+                ? menuGroups.filter(g => g.category.id === selectedCategoryId)
+                : menuGroups;
+              
+              return displayGroups.map((group, groupIndex) => (
+                <div key={group.category.id} className="animate-fade-in" style={{ animationDelay: `${groupIndex * 100}ms` }}>
+                  {/* 分类标题 */}
+                  <div className="mb-4 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-gray-900">{group.category.name}</h2>
+                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                    <span className="text-sm text-gray-500 font-medium">{group.items.length} {t('menu.items')}</span>
+                  </div>
+                  
+                  {/* 商品网格 */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    {group.items.map((item, itemIndex) => (
+                      <div
+                        key={item.id}
+                        onClick={() => navigate(`/item/${item.id}`)}
+                        className="card card-hover cursor-pointer overflow-hidden group animate-fade-in"
+                        style={{ animationDelay: `${itemIndex * 50}ms` }}
+                      >
+                        <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          {!item.available && (
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                              <span className="text-white font-bold text-lg">{t('menu.soldOut')}</span>
+                            </div>
+                          )}
+                          {item.available && (
+                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <svg className="w-4 h-4 text-sb-green" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.name}</h3>
+                          <p className="text-xs text-gray-500 mb-3 font-medium">{item.nameEn}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
+                              ¥{item.price.toFixed(2)}
+                            </p>
+                            {item.available && (
+                              <div className="w-8 h-8 bg-sb-green/10 rounded-full flex items-center justify-center group-hover:bg-sb-green group-hover:scale-110 transition-all duration-300">
+                                <svg className="w-5 h-5 text-sb-green group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         )}
         </div>

@@ -29,6 +29,8 @@ export default {
     viewDetails: 'Ver Detalles',
     empty: 'No hay productos disponibles',
     admin: 'Panel de Administración',
+    items: 'artículos',
+    soldOut: 'Agotado',
   },
   // Carrito de compras
   cart: {

@@ -46,28 +46,36 @@ export default function ItemDetailPage() {
 
   const calculatePrice = () => {
     if (!item) return 0;
-    let price = item.price;
     
+    // 基础价格：如果有尺寸选择，使用尺寸价格（替换基础价格）；否则使用商品基础价格
+    let basePrice = item.price;
     if (selectedSize && item.sizes) {
       const sizeOption = item.sizes.find(s => s.name === selectedSize);
       if (sizeOption) {
-        price += sizeOption.price;
+        // 尺寸价格：如果isBasePrice为true或未设置，则替换基础价格；否则累加
+        if (sizeOption.isBasePrice !== false) {
+          basePrice = sizeOption.price; // 替换基础价格
+        } else {
+          basePrice += sizeOption.price; // 累加价格
+        }
       }
     }
-
+    
+    // 加料/自定义选项：累加到基础价格
+    let totalPrice = basePrice;
     if (item.customizations) {
       item.customizations.forEach(customization => {
         const selectedOptionId = selectedCustomizations.get(customization.id);
         if (selectedOptionId) {
           const option = customization.options.find(opt => opt.id === selectedOptionId);
           if (option) {
-            price += option.price;
+            totalPrice += option.price; // 累加价格
           }
         }
       });
     }
 
-    return price;
+    return totalPrice;
   };
 
   const handleAddToCart = async () => {
@@ -178,22 +186,24 @@ export default function ItemDetailPage() {
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-3">选择规格</h3>
             <div className="flex gap-3">
-              {item.sizes.map((size) => (
-                <button
-                  key={size.name}
-                  onClick={() => setSelectedSize(size.name)}
-                  className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
-                    selectedSize === size.name
-                      ? 'border-sb-green bg-sb-light-green text-sb-green'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="font-semibold">{size.name}</div>
-                  {size.price > 0 && (
-                    <div className="text-sm">+¥{size.price}</div>
-                  )}
-                </button>
-              ))}
+              {item.sizes.map((size) => {
+                const isBasePrice = size.isBasePrice !== false; // 默认是替换基础价格
+                const displayPrice = isBasePrice ? size.price : item.price + size.price;
+                return (
+                  <button
+                    key={size.name}
+                    onClick={() => setSelectedSize(size.name)}
+                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-colors ${
+                      selectedSize === size.name
+                        ? 'border-sb-green bg-sb-light-green text-sb-green'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-semibold">{size.name}</div>
+                    <div className="text-sm text-gray-600">¥{displayPrice.toFixed(2)}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

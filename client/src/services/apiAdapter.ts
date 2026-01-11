@@ -1,5 +1,5 @@
 import { localApiService } from './localApi';
-import { MenuItem, CartItem, Order, PaymentMethod, MerchantBankAccount, Category } from '../types';
+import { MenuItem, CartItem, Order, PaymentMethod, MerchantBankAccount, Category, ShopSettings } from '../types';
 
 /**
  * API适配器
@@ -188,4 +188,36 @@ export const adminApi = {
   },
   // 销量统计
   getMenuItemSalesCounts: async () => new ApiResponse(await localApiService.getAllMenuItemSalesCounts()),
+  // 店铺设置
+  getShopSettings: async () => {
+    // 返回默认店铺设置
+    const defaultSettings: ShopSettings = {
+      id: 'default',
+      name: '星巴克',
+      nameEn: 'Starbucks',
+      description: '欢迎光临星巴克',
+      descriptionEn: 'Welcome to Starbucks',
+      bannerImages: [],
+      logo: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    return new ApiResponse(defaultSettings);
+  },
+  updateShopSettings: async (updates: Partial<ShopSettings>) => {
+    // 本地模式下，暂时只返回更新后的设置
+    const defaultSettings: ShopSettings = {
+      id: 'default',
+      name: '星巴克',
+      nameEn: 'Starbucks',
+      description: '欢迎光临星巴克',
+      descriptionEn: 'Welcome to Starbucks',
+      bannerImages: updates.bannerImages || [],
+      logo: updates.logo || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      ...updates,
+    };
+    return new ApiResponse(defaultSettings);
+  },
 };

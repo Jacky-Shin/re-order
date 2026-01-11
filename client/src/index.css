@@ -158,3 +158,31 @@ input, textarea {
     max-width: 1200px;
   }
 }
+
+/* 店铺图片轮播动画 */
+@keyframes scroll-x {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(-200%);
+  }
+  75% {
+    transform: translateX(-300%);
+  }
+}
+
+.animate-scroll-x {
+  animation: scroll-x 20s infinite;
+  display: flex;
+  width: calc(100% * var(--image-count, 1));
+}
+
+/* 如果只有一张图片，不显示动画 */
+.animate-scroll-x:has(img:only-child) {
+  animation: none;
+  width: 100%;
+}

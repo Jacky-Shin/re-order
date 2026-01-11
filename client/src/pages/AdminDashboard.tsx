@@ -76,6 +76,13 @@ export default function AdminDashboard() {
       color: 'bg-teal-50 hover:bg-teal-100 border-teal-200',
     },
     {
+      title: '店铺管理',
+      description: '装修店铺，上传店铺图片',
+      icon: '🏪',
+      link: '/admin/shop',
+      color: 'bg-pink-50 hover:bg-pink-100 border-pink-200',
+    },
+    {
       title: t('admin.dashboard.manageOrders'),
       description: t('admin.orders.title'),
       icon: '📦',

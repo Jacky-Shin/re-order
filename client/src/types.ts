@@ -22,7 +22,8 @@ export interface MenuItem {
 
 export interface SizeOption {
   name: string;
-  price: number;
+  price: number; // 如果是尺寸，这是替换基础价格；如果是加料，这是累加价格
+  isBasePrice?: boolean; // true表示这是基础价格（替换），false表示这是加价（累加）
 }
 
 export interface Customization {
@@ -112,4 +113,16 @@ export interface CardInfo {
   expiryDate: string;
   cvv: string;
   cardholderName?: string;
+}
+
+export interface ShopSettings {
+  id: string;
+  name: string;
+  nameEn?: string;
+  description?: string;
+  descriptionEn?: string;
+  bannerImages: string[]; // 商铺顶部展示图片（可多张）
+  logo?: string; // 店铺Logo
+  createdAt: string;
+  updatedAt: string;
 }
