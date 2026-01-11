@@ -21,6 +21,10 @@
     "concurrently": "^8.2.2"
   },
   "dependencies": {
-    "qrcode": "^1.5.4"
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.1",
+    "@types/node": "^25.0.6",
+    "qrcode": "^1.5.4",
+    "stripe": "^20.1.2"
   }
 }

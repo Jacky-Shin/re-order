@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { paymentApi, orderApi } from '../api/client';
-import { PaymentMethod, CardInfo } from '../types';
+import { PaymentMethod } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import StripePaymentForm from '../components/StripePaymentForm';
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [cardInfo, setCardInfo] = useState<CardInfo>({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardholderName: '',
-  });
   const [processing, setProcessing] = useState(false);
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,82 +34,67 @@ export default function PaymentPage() {
     }
   };
 
-  const formatCardNumber = (value: string) => {
-    const cleaned = value.replace(/\s/g, '');
-    const match = cleaned.match(/.{1,4}/g);
-    return match ? match.join(' ') : cleaned;
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const cleaned = value.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
-    }
-    return cleaned;
-  };
-
-  const handleCardInfoChange = (field: keyof CardInfo, value: string) => {
-    if (field === 'cardNumber') {
-      setCardInfo({ ...cardInfo, cardNumber: formatCardNumber(value).slice(0, 19) });
-    } else if (field === 'expiryDate') {
-      setCardInfo({ ...cardInfo, expiryDate: formatExpiryDate(value).slice(0, 5) });
-    } else if (field === 'cvv') {
-      setCardInfo({ ...cardInfo, cvv: value.replace(/\D/g, '').slice(0, 4) });
-    } else {
-      setCardInfo({ ...cardInfo, [field]: value });
-    }
-  };
-
-  const validateCardInfo = (): boolean => {
-    if (paymentMethod === 'cash') return true;
-    
-    const cleanedCardNumber = cardInfo.cardNumber.replace(/\s/g, '');
-    if (cleanedCardNumber.length < 13 || cleanedCardNumber.length > 19) {
-      alert(t('payment.invalidCardNumber'));
-      return false;
-    }
-    
-    if (!cardInfo.expiryDate || cardInfo.expiryDate.length !== 5) {
-      alert(t('payment.invalidExpiryDate'));
-      return false;
-    }
-    
-    if (!cardInfo.cvv || cardInfo.cvv.length < 3) {
-      alert(t('payment.invalidCVV'));
-      return false;
-    }
-    
-    return true;
-  };
 
   const handlePayment = async () => {
-    if (!validateCardInfo()) return;
-    
+    if (paymentMethod === 'cash') {
+      // 现金支付：使用原有逻辑
+      if (!orderId) {
+        alert(t('payment.orderIdNotFound'));
+        return;
+      }
+
+      setProcessing(true);
+      try {
+        const response = await paymentApi.process({
+          orderId,
+          method: 'cash',
+        });
+
+        if (response.data.success) {
+          navigate(`/order-status/${order.id}`);
+        } else {
+          alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
+        }
+      } catch (error: any) {
+        console.error('支付失败:', error);
+        alert(t('payment.paymentFailed') + ': ' + (error.response?.data?.error || t('payment.paymentFailedNetwork')));
+      } finally {
+        setProcessing(false);
+      }
+    }
+    // 银行卡/Visa支付：由StripePaymentForm组件处理
+  };
+
+  const handleStripePaymentSuccess = async (paymentIntentId: string) => {
     if (!orderId) {
       alert(t('payment.orderIdNotFound'));
       return;
     }
 
-    setProcessing(true);
     try {
+      // 更新订单和支付记录
       const response = await paymentApi.process({
         orderId,
         method: paymentMethod,
-        cardInfo: paymentMethod !== 'cash' ? cardInfo : undefined,
+        cardInfo: {
+          transactionId: paymentIntentId,
+        },
       });
 
       if (response.data.success) {
-        // 跳转到订单详情页（使用订单ID）
         navigate(`/order-status/${order.id}`);
       } else {
         alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
       }
     } catch (error: any) {
-      console.error('支付失败:', error);
-      alert(t('payment.paymentFailed') + ': ' + (error.response?.data?.error || t('payment.paymentFailedNetwork')));
-    } finally {
-      setProcessing(false);
+      console.error('更新支付记录失败:', error);
+      // 即使更新失败，支付已经成功，仍然跳转
+      navigate(`/order-status/${order.id}`);
     }
+  };
+
+  const handleStripePaymentError = (error: string) => {
+    alert(t('payment.paymentFailed') + ': ' + error);
   };
 
   if (loading) {
@@ -232,71 +212,20 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Card Info Form */}
+        {/* Stripe Payment Form */}
         {(paymentMethod === 'card' || paymentMethod === 'visa') && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-lg font-semibold mb-4">银行卡信息</h2>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  持卡人姓名（可选）
-                </label>
-                <input
-                  type="text"
-                  value={cardInfo.cardholderName}
-                  onChange={(e) => handleCardInfoChange('cardholderName', e.target.value)}
-                  placeholder="请输入持卡人姓名"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  卡号 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={cardInfo.cardNumber}
-                  onChange={(e) => handleCardInfoChange('cardNumber', e.target.value)}
-                  placeholder="1234 5678 9012 3456"
-                  maxLength={19}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    有效期 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={cardInfo.expiryDate}
-                    onChange={(e) => handleCardInfoChange('expiryDate', e.target.value)}
-                    placeholder="MM/YY"
-                    maxLength={5}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    CVV <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={cardInfo.cvv}
-                    onChange={(e) => handleCardInfoChange('cvv', e.target.value)}
-                    placeholder="123"
-                    maxLength={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                <p>🔒 您的支付信息已加密，安全可靠</p>
-              </div>
-            </div>
+            <h2 className="text-lg font-semibold mb-4">
+              {paymentMethod === 'visa' ? 'Visa支付' : '银行卡支付'}
+            </h2>
+            <StripePaymentForm
+              amount={order.totalAmount}
+              orderId={order.id}
+              onSuccess={handleStripePaymentSuccess}
+              onError={handleStripePaymentError}
+              processing={processing}
+              setProcessing={setProcessing}
+            />
           </div>
         )}
 
@@ -318,18 +247,20 @@ export default function PaymentPage() {
           </div>
         )}
 
-        {/* Payment Button */}
-        <button
-          onClick={handlePayment}
-          disabled={processing}
-          className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-            processing
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-sb-green text-white hover:bg-opacity-90'
-          }`}
-        >
-          {processing ? t('payment.processing') : t('common.confirm')}
-        </button>
+        {/* Payment Button - 仅现金支付显示 */}
+        {paymentMethod === 'cash' && (
+          <button
+            onClick={handlePayment}
+            disabled={processing}
+            className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+              processing
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-sb-green text-white hover:bg-opacity-90'
+            }`}
+          >
+            {processing ? t('payment.processing') : t('common.confirm')}
+          </button>
+        )}
       </div>
     </div>
   );

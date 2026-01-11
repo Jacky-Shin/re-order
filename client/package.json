@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@capacitor/core": "^7.0.0",
+    "@stripe/stripe-js": "^2.4.0",
+    "@stripe/react-stripe-js": "^2.4.0",
     "axios": "^1.6.2",
     "eruda": "^3.0.0",
     "firebase": "^10.14.1",

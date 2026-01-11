@@ -65,14 +65,15 @@ export interface Payment {
   method: PaymentMethod;
   amount: number;
   status: PaymentStatus;
-  transactionId?: string;
+  transactionId?: string; // Stripe Payment Intent ID
   paidAt?: string;
   createdAt: string;
   cardInfo?: {
-    cardNumber?: string;
+    cardNumber?: string; // 仅存储后4位（如果可用）
     expiryDate?: string;
     cvv?: string;
     cardholderName?: string;
+    transactionId?: string; // Stripe Payment Intent ID
   };
 }
 

@@ -255,15 +255,17 @@ class LocalApiService {
         message: '订单已提交，请等待商家备餐完成后前往前台支付现金',
       };
     } else if (data.method === 'card' || data.method === 'visa') {
-      // 银行卡/Visa支付：模拟支付处理
-      // 在实际应用中，这里会调用支付网关API
+      // 银行卡/Visa支付：Stripe支付已在StripePaymentForm中处理
+      // 这里只是更新订单和支付记录
       const payment: Payment = {
         id: uuidv4(),
         orderId: data.orderId,
         amount: order.totalAmount,
         method: data.method,
         status: 'completed',
+        transactionId: data.cardInfo?.transactionId, // Stripe Payment Intent ID
         cardInfo: data.cardInfo,
+        paidAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };
 
