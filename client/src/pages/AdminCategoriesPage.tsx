@@ -5,6 +5,7 @@ import { Category } from '../types';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import { v4 as uuidv4 } from 'uuid';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function AdminCategoriesPage() {
   const navigate = useNavigate();

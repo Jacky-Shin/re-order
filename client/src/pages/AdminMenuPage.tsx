@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { adminApi } from '../api/client';
-import { MenuItem, Category, SizeOption, Customization, CustomizationOption } from '../types';
+import { MenuItem, Category } from '../types';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -417,7 +417,7 @@ export default function AdminMenuPage() {
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
                   />
-                  {formData.price > 0 && formData.customizations?.length && (
+                  {(formData.price && formData.price > 0) && formData.customizations?.length && (
                     <div className="mt-2 p-2 bg-sb-light-green rounded-lg">
                       <p className="text-xs text-gray-600 mb-1">价格范围预览：</p>
                       {(() => {

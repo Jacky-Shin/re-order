@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { Payment } from '../types';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function AdminPaymentsPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
 

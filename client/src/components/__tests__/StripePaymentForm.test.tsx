@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import { BrowserRouter } from 'react-router-dom';
 import StripePaymentForm from '../StripePaymentForm';
 import { LanguageProvider } from '../../contexts/LanguageContext';

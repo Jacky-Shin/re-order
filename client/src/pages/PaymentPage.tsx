@@ -53,7 +53,9 @@ export default function PaymentPage() {
         });
 
         if (response.data.success) {
-          navigate(`/order-status/${order.id}`);
+          if (order) {
+            navigate(`/order-status/${order.id}`);
+          }
         } else {
           alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
         }
@@ -107,14 +109,18 @@ export default function PaymentPage() {
           }
         }
         
-        navigate(`/order-status/${order.id}`);
+        if (order) {
+          navigate(`/order-status/${order.id}`);
+        }
       } else {
         alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
       }
     } catch (error) {
       console.error('更新支付记录失败:', error);
       // 即使更新失败，支付已经成功，仍然跳转
-      navigate(`/order-status/${order.id}`);
+      if (order) {
+        navigate(`/order-status/${order.id}`);
+      }
     }
   };
 
