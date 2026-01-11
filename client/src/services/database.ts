@@ -342,10 +342,28 @@ class DatabaseService {
   async getOrders(): Promise<Order[]> {
     if (Capacitor.getPlatform() === 'web') {
       // Web环境：优先使用Firebase，否则使用localStorage
+      let orders: Order[] = [];
       if (firebaseService.isAvailable()) {
-        return firebaseService.getOrders();
+        orders = await firebaseService.getOrders();
+      } else {
+        orders = await this.getOrdersFromStorage();
       }
-      return this.getOrdersFromStorage();
+      
+      // 过滤：只返回支付成功的订单（visa/银行卡支付成功，或现金支付）
+      // 现金支付：paymentMethod === 'cash' && paymentStatus === 'pending' 或 'completed'
+      // 银行卡/Visa支付：paymentMethod === 'card' || 'visa' && paymentStatus === 'completed'
+      return orders.filter(order => {
+        // 现金支付：总是显示（需要前台收款）
+        if (order.paymentMethod === 'cash') {
+          return true;
+        }
+        // 银行卡/Visa支付：只有支付成功才显示
+        if (order.paymentMethod === 'card' || order.paymentMethod === 'visa') {
+          return order.paymentStatus === 'completed';
+        }
+        // 其他情况：不显示
+        return false;
+      });
     }
     if (!this.db) throw new Error('数据库未初始化');
 

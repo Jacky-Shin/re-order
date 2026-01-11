@@ -104,11 +104,8 @@ export default function PaymentPage() {
       });
 
       if (response.data.success) {
-        // 现金支付时显示特殊提示
-        if (paymentMethod === 'cash') {
-          alert(t('payment.cashPaymentSuccess'));
-        }
-        navigate(`/order/${order.orderNumber}`);
+        // 跳转到订单详情页（使用订单ID）
+        navigate(`/order-status/${order.id}`);
       } else {
         alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
       }
@@ -331,7 +328,7 @@ export default function PaymentPage() {
               : 'bg-sb-green text-white hover:bg-opacity-90'
           }`}
         >
-          {processing ? '处理中...' : `确认支付 ¥${order.totalAmount.toFixed(2)}`}
+          {processing ? t('payment.processing') : t('common.confirm')}
         </button>
       </div>
     </div>

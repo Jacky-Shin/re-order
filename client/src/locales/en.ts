@@ -118,6 +118,14 @@ export default {
     paymentStatus: 'Payment Status',
     paid: 'Paid',
     unpaid: 'Unpaid',
+    notification: {
+      queuing: 'Your order is queuing',
+      queuingDesc: 'Please wait, your order is waiting in the queue',
+      preparing: 'Your order is being prepared',
+      preparingDesc: 'The chef is preparing your order, please wait',
+      ready: 'Your order is ready',
+      readyDesc: 'Your order has been completed, please go to the counter to pick up',
+    },
   },
   // Scan page
   scan: {
@@ -208,6 +216,7 @@ export default {
       paid: 'Paid',
       unpaid: 'Unpaid',
       cashPending: 'Cash Pending',
+      cashPayment: 'Cash Payment',
       items: 'Order Items',
       actions: 'Actions',
       startPreparing: 'Start Preparing',

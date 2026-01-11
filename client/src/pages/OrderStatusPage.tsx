@@ -5,7 +5,7 @@ import { Order, Payment } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function OrderStatusPage() {
-  const { orderNumber } = useParams<{ orderNumber: string }>();
+  const { orderNumber, orderId } = useParams<{ orderNumber?: string; orderId?: string }>();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [order, setOrder] = useState<Order | null>(null);
@@ -14,22 +14,54 @@ export default function OrderStatusPage() {
   const [polling, setPolling] = useState(true);
 
   useEffect(() => {
-    if (orderNumber) {
-      loadOrder(orderNumber);
+    if (orderId) {
+      loadOrderById(orderId);
+    } else if (orderNumber) {
+      loadOrderByNumber(orderNumber);
     }
-  }, [orderNumber]);
+  }, [orderId, orderNumber]);
 
   useEffect(() => {
-    if (!polling || !orderNumber) return;
+    if (!polling || !order) return;
 
     const interval = setInterval(() => {
-      loadOrder(orderNumber);
+      if (orderId) {
+        loadOrderById(orderId);
+      } else if (orderNumber) {
+        loadOrderByNumber(orderNumber);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [polling, orderNumber]);
+  }, [polling, orderId, orderNumber]);
 
-  const loadOrder = async (num: string) => {
+  const loadOrderById = async (id: string) => {
+    try {
+      const response = await orderApi.getById(id);
+      setOrder(response.data);
+      setLoading(false);
+      
+      // 加载支付信息
+      if (response.data.paymentId) {
+        try {
+          const paymentResponse = await paymentApi.getById(response.data.paymentId);
+          setPayment(paymentResponse.data);
+        } catch (error) {
+          console.error('加载支付信息失败:', error);
+        }
+      }
+      
+      // 如果订单已完成或已取消，停止轮询
+      if (response.data.status === 'completed' || response.data.status === 'cancelled') {
+        setPolling(false);
+      }
+    } catch (error) {
+      console.error('加载订单失败:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadOrderByNumber = async (num: string) => {
     try {
       const response = await orderApi.getByNumber(num);
       setOrder(response.data);
@@ -132,6 +164,37 @@ export default function OrderStatusPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* Notification Banner */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          {order.status === 'pending' && (
+            <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <span className="text-2xl">⏳</span>
+              <div>
+                <h3 className="font-semibold text-yellow-900">{t('orderStatus.notification.queuing')}</h3>
+                <p className="text-sm text-yellow-700 mt-1">{t('orderStatus.notification.queuingDesc')}</p>
+              </div>
+            </div>
+          )}
+          {order.status === 'preparing' && (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <span className="text-2xl">👨‍🍳</span>
+              <div>
+                <h3 className="font-semibold text-blue-900">{t('orderStatus.notification.preparing')}</h3>
+                <p className="text-sm text-blue-700 mt-1">{t('orderStatus.notification.preparingDesc')}</p>
+              </div>
+            </div>
+          )}
+          {order.status === 'ready' && (
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-2xl">✅</span>
+              <div>
+                <h3 className="font-semibold text-green-900">{t('orderStatus.notification.ready')}</h3>
+                <p className="text-sm text-green-700 mt-1">{t('orderStatus.notification.readyDesc')}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Order Status */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6 text-center">
           <div className={`inline-block px-4 py-2 rounded-full mb-4 ${getStatusColor(order.status)}`}>

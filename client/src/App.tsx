@@ -38,6 +38,7 @@ function AppRoutes() {
       <Route path="/cart" element={<CartPage />} />
       <Route path="/order" element={<OrderPage />} />
       <Route path="/order/:orderNumber" element={<OrderStatusPage />} />
+      <Route path="/order-status/:orderId" element={<OrderStatusPage />} />
       <Route path="/payment/:orderId" element={<PaymentPage />} />
       <Route path="/qrcode" element={<QRCodePage />} />
       <Route path="/merchant/settings" element={<ProtectedRoute><MerchantSettingsPage /></ProtectedRoute>} />

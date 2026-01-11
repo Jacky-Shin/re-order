@@ -118,6 +118,14 @@ export default {
     paymentStatus: '支付状态',
     paid: '已支付',
     unpaid: '未支付',
+    notification: {
+      queuing: '你的订单正在排队中',
+      queuingDesc: '请稍候，您的订单正在排队等待处理',
+      preparing: '你的订单正在制作中',
+      preparingDesc: '厨师正在准备您的订单，请稍候',
+      ready: '你的订单已完成',
+      readyDesc: '您的订单已完成，请前往前台取餐',
+    },
   },
   // 扫码页面
   scan: {
