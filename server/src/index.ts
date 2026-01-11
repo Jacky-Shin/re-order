@@ -26,7 +26,9 @@ app.use(cors({
   exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
   maxAge: 86400 // 24小时
 }));
-app.use(express.json());
+// 增加请求体大小限制以支持 base64 图片
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // 静态文件服务 - 提供上传的图片访问
 app.use('/uploads', express.static(join(__dirname, '../public/uploads')));

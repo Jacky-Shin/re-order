@@ -106,24 +106,50 @@ export default function AdminShopPage() {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
+          if (!result) {
+            reject(new Error('图片读取失败'));
+            return;
+          }
           resolve(result);
         };
-        reader.onerror = reject;
+        reader.onerror = (error) => {
+          reject(new Error('图片读取失败: ' + (error?.toString() || '未知错误')));
+        };
         reader.readAsDataURL(file);
       });
+      
+      console.log('图片转换为base64成功，长度:', base64Image.length);
       
       // 添加到banner图片列表
       const currentBanners = shopSettings?.bannerImages || [];
       const updatedBanners = [...currentBanners, base64Image];
       
-      await adminApi.updateShopSettings({
+      console.log('准备更新店铺设置，banner数量:', updatedBanners.length);
+      
+      const response = await adminApi.updateShopSettings({
         bannerImages: updatedBanners,
       });
       
+      console.log('店铺设置更新成功:', response);
+      
       await loadShopSettings();
+      
+      alert('图片上传成功！');
     } catch (error: any) {
       console.error('上传图片失败:', error);
-      alert('上传图片失败: ' + (error.message || '请重试'));
+      console.error('错误详情:', {
+        message: error?.message,
+        stack: error?.stack,
+        response: error?.response,
+        data: error?.response?.data,
+      });
+      
+      const errorMessage = error?.response?.data?.error 
+        || error?.message 
+        || error?.toString() 
+        || '未知错误';
+      
+      alert('上传图片失败: ' + errorMessage);
     } finally {
       setUploading(false);
     }

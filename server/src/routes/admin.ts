@@ -312,10 +312,29 @@ adminRouter.get('/shop-settings', async (req: Request, res: Response) => {
 adminRouter.put('/shop-settings', async (req: Request, res: Response) => {
   try {
     const updates = req.body;
+    
+    // 验证 bannerImages 数组大小（防止 base64 图片过大）
+    if (updates.bannerImages && Array.isArray(updates.bannerImages)) {
+      const totalSize = updates.bannerImages.reduce((sum: number, img: string) => {
+        return sum + (img ? img.length : 0);
+      }, 0);
+      
+      // 限制总大小在 10MB 以内（base64 编码后）
+      if (totalSize > 10 * 1024 * 1024) {
+        return res.status(400).json({ 
+          error: '图片总大小超过限制（10MB），请删除部分图片后重试' 
+        });
+      }
+    }
+    
     const updated = await updateShopSettings(updates);
     res.json(updated);
-  } catch (error) {
+  } catch (error: any) {
     console.error('更新店铺设置失败:', error);
-    res.status(500).json({ error: '更新店铺设置失败' });
+    const errorMessage = error?.message || error?.toString() || '更新店铺设置失败';
+    res.status(500).json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+    });
   }
 });

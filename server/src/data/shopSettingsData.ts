@@ -20,20 +20,60 @@ const DEFAULT_SETTINGS: ShopSettings = {
   updatedAt: new Date().toISOString(),
 };
 
+// 内存存储（用于 Vercel 等只读文件系统环境）
+let memoryStore: ShopSettings | null = null;
+
+// 检查是否在只读文件系统环境（如 Vercel）
+const isReadOnlyFileSystem = () => {
+  // 检查环境变量或尝试写入文件
+  return process.env.VERCEL === '1' || process.env.NOW_REGION !== undefined;
+};
+
 export async function getShopSettings(): Promise<ShopSettings> {
+  // 如果在只读文件系统环境，使用内存存储
+  if (isReadOnlyFileSystem()) {
+    if (memoryStore) {
+      return memoryStore;
+    }
+    memoryStore = { ...DEFAULT_SETTINGS };
+    return memoryStore;
+  }
+
+  // 否则尝试从文件读取
   try {
     const data = await readFile(dataPath, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    // 如果文件不存在，返回默认设置
-    await saveShopSettings(DEFAULT_SETTINGS);
-    return DEFAULT_SETTINGS;
+    // 如果文件不存在，尝试创建
+    try {
+      await saveShopSettings(DEFAULT_SETTINGS);
+      return DEFAULT_SETTINGS;
+    } catch (writeError) {
+      // 如果写入失败（可能是只读文件系统），使用内存存储
+      console.warn('无法写入文件系统，使用内存存储:', writeError);
+      memoryStore = { ...DEFAULT_SETTINGS };
+      return memoryStore;
+    }
   }
 }
 
 export async function saveShopSettings(settings: ShopSettings): Promise<void> {
   settings.updatedAt = new Date().toISOString();
-  await writeFile(dataPath, JSON.stringify(settings, null, 2), 'utf-8');
+  
+  // 如果在只读文件系统环境，只更新内存存储
+  if (isReadOnlyFileSystem()) {
+    memoryStore = settings;
+    return;
+  }
+
+  // 否则尝试写入文件
+  try {
+    await writeFile(dataPath, JSON.stringify(settings, null, 2), 'utf-8');
+  } catch (error) {
+    // 如果写入失败，使用内存存储
+    console.warn('无法写入文件系统，使用内存存储:', error);
+    memoryStore = settings;
+  }
 }
 
 export async function updateShopSettings(updates: Partial<ShopSettings>): Promise<ShopSettings> {
