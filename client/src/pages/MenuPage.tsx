@@ -106,7 +106,7 @@ export default function MenuPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-sb-green text-white p-4 sticky top-0 z-10 shadow-md">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
           <div>
             <h1 className="text-xl font-bold">{t('menu.title')}</h1>
             {tableNumber && (
@@ -134,27 +134,28 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="bg-white border-b sticky top-[73px] z-10 overflow-x-auto">
-        <div className="flex max-w-4xl mx-auto px-4">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategoryId(category.id)}
-              className={`px-4 py-3 whitespace-nowrap font-medium transition-colors relative ${
-                selectedCategoryId === category.id
-                  ? 'text-sb-green border-b-2 border-sb-green'
-                  : 'text-gray-600 hover:text-sb-green'
-              }`}
-            >
-              {category.name}
-            </button>
-          ))}
+      <div className="max-w-6xl mx-auto px-4 py-6 flex gap-6">
+        {/* Categories - 左侧纵向列表 */}
+        <div className="bg-white rounded-lg shadow-sm sticky top-[73px] h-fit max-h-[calc(100vh-100px)] overflow-y-auto w-32 flex-shrink-0">
+          <div className="flex flex-col">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategoryId(category.id)}
+                className={`px-4 py-3 text-left font-medium transition-colors border-l-4 ${
+                  selectedCategoryId === category.id
+                    ? 'text-sb-green border-sb-green bg-sb-light-green'
+                    : 'text-gray-600 border-transparent hover:text-sb-green hover:bg-gray-50'
+                }`}
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Menu Items */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Menu Items - 右侧商品网格 */}
+        <div className="flex-1 min-w-0">
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sb-green"></div>
@@ -192,6 +193,7 @@ export default function MenuPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
