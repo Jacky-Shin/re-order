@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { menuApi } from '../api/client';
-import { MenuItem } from '../types';
+import { menuApi, categoryApi } from '../api/client';
+import { MenuItem, Category } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 
 export default function MenuPage() {
-  const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -23,12 +23,12 @@ export default function MenuPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedCategory) {
-      loadMenuByCategory(selectedCategory);
+    if (selectedCategoryId) {
+      loadMenuByCategory(selectedCategoryId);
     } else {
       loadAllMenu();
     }
-  }, [selectedCategory]);
+  }, [selectedCategoryId]);
 
   // 监听数据库更新事件（当商家后台修改数据时自动刷新）
   useEffect(() => {
@@ -36,10 +36,10 @@ export default function MenuPage() {
     
     // localStorage同步
     const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
-      if (key === 'db_menu_items') {
+      if (key === 'db_menu_items' || key === 'db_categories') {
         loadCategories();
-        if (selectedCategory) {
-          loadMenuByCategory(selectedCategory);
+        if (selectedCategoryId) {
+          loadMenuByCategory(selectedCategoryId);
         } else {
           loadAllMenu();
         }
@@ -51,8 +51,8 @@ export default function MenuPage() {
     if (firebaseService.isAvailable()) {
       const firebaseUnsubscribe = firebaseService.onMenuItemsChange(() => {
         loadCategories();
-        if (selectedCategory) {
-          loadMenuByCategory(selectedCategory);
+        if (selectedCategoryId) {
+          loadMenuByCategory(selectedCategoryId);
         } else {
           loadAllMenu();
         }
@@ -63,14 +63,16 @@ export default function MenuPage() {
     return () => {
       unsubscribes.forEach(unsub => unsub());
     };
-  }, [selectedCategory]);
+  }, [selectedCategoryId]);
 
   const loadCategories = async () => {
     try {
-      const response = await menuApi.getCategories();
+      const response = await categoryApi.getAll();
       setCategories(response.data);
       if (response.data.length > 0) {
-        setSelectedCategory(response.data[0]);
+        // 优先选择活动类别，否则选择第一个
+        const promotionCategory = response.data.find(cat => cat.isPromotion);
+        setSelectedCategoryId(promotionCategory ? promotionCategory.id : response.data[0].id);
       }
     } catch (error) {
       console.error('加载分类失败:', error);
@@ -89,10 +91,10 @@ export default function MenuPage() {
     }
   };
 
-  const loadMenuByCategory = async (category: string) => {
+  const loadMenuByCategory = async (categoryId: string) => {
     try {
       setLoading(true);
-      const response = await menuApi.getByCategory(category);
+      const response = await menuApi.getByCategory(categoryId);
       setMenuItems(response.data);
     } catch (error) {
       console.error('加载菜单失败:', error);
@@ -138,15 +140,18 @@ export default function MenuPage() {
         <div className="flex max-w-4xl mx-auto px-4">
           {categories.map((category) => (
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-3 whitespace-nowrap font-medium transition-colors ${
-                selectedCategory === category
+              key={category.id}
+              onClick={() => setSelectedCategoryId(category.id)}
+              className={`px-4 py-3 whitespace-nowrap font-medium transition-colors relative ${
+                selectedCategoryId === category.id
                   ? 'text-sb-green border-b-2 border-sb-green'
                   : 'text-gray-600 hover:text-sb-green'
               }`}
             >
-              {category}
+              {category.name}
+              {category.isPromotion && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              )}
             </button>
           ))}
         </div>

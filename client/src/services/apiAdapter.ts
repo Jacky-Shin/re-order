@@ -1,5 +1,5 @@
 import { localApiService } from './localApi';
-import { MenuItem, CartItem, Order, PaymentMethod, MerchantBankAccount } from '../types';
+import { MenuItem, CartItem, Order, PaymentMethod, MerchantBankAccount, Category } from '../types';
 
 /**
  * API适配器
@@ -26,8 +26,27 @@ localApiService.initialize().catch(console.error);
 export const menuApi = {
   getAll: async () => new ApiResponse(await localApiService.getMenuItems()),
   getCategories: async () => new ApiResponse(await localApiService.getCategories()),
-  getByCategory: async (category: string) => new ApiResponse(await localApiService.getMenuItemsByCategory(category)),
+  getByCategory: async (categoryId: string) => new ApiResponse(await localApiService.getMenuItemsByCategory(categoryId)),
   getById: async (id: string) => new ApiResponse(await localApiService.getMenuItemById(id)),
+};
+
+export const categoryApi = {
+  getAll: async () => new ApiResponse(await localApiService.getCategories()),
+  getById: async (id: string) => {
+    const category = await localApiService.getCategoryById(id);
+    if (!category) throw new Error('分类不存在');
+    return new ApiResponse(category);
+  },
+  add: async (category: Category) => new ApiResponse(await localApiService.addCategory(category)),
+  update: async (id: string, updates: Partial<Category>) => new ApiResponse(await localApiService.updateCategory(id, updates)),
+  delete: async (id: string) => {
+    await localApiService.deleteCategory(id);
+    return new ApiResponse({ success: true });
+  },
+  updateOrder: async (categoryIds: string[]) => {
+    await localApiService.updateCategoryOrder(categoryIds);
+    return new ApiResponse({ success: true });
+  },
 };
 
 // 购物车API - 使用localStorage作为临时存储（可以后续改为数据库）
@@ -155,4 +174,18 @@ export const adminApi = {
   getOrderStats: async () => new ApiResponse(await localApiService.getOrderStats()),
   getPayments: async () => new ApiResponse(await localApiService.getAllPayments()),
   getStats: async () => new ApiResponse(await localApiService.getAdminStats()),
+  // 分类管理
+  getCategories: async () => new ApiResponse(await localApiService.getCategories()),
+  addCategory: async (category: Category) => new ApiResponse(await localApiService.addCategory(category)),
+  updateCategory: async (id: string, updates: Partial<Category>) => new ApiResponse(await localApiService.updateCategory(id, updates)),
+  deleteCategory: async (id: string) => {
+    await localApiService.deleteCategory(id);
+    return new ApiResponse({ success: true });
+  },
+  updateCategoryOrder: async (categoryIds: string[]) => {
+    await localApiService.updateCategoryOrder(categoryIds);
+    return new ApiResponse({ success: true });
+  },
+  // 销量统计
+  getMenuItemSalesCounts: async () => new ApiResponse(await localApiService.getAllMenuItemSalesCounts()),
 };

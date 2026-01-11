@@ -1,4 +1,4 @@
-import { MenuItem, CartItem, Order, Payment, PaymentMethod, MerchantBankAccount } from '../types';
+import { MenuItem, CartItem, Order, Payment, PaymentMethod, MerchantBankAccount, Category } from '../types';
 import { useLocalApi } from '../config/environment';
 import * as localApi from '../services/apiAdapter';
 import axios, { AxiosInstance } from 'axios';
@@ -47,9 +47,19 @@ if (!useLocal) {
 // 菜单API
 export const menuApi = useLocal ? localApi.menuApi : {
   getAll: () => httpApi!.get<MenuItem[]>('/menu'),
-  getCategories: () => httpApi!.get<string[]>('/menu/categories'),
-  getByCategory: (category: string) => httpApi!.get<MenuItem[]>(`/menu/category/${category}`),
+  getCategories: () => httpApi!.get<Category[]>('/menu/categories'),
+  getByCategory: (categoryId: string) => httpApi!.get<MenuItem[]>(`/menu/category/${categoryId}`),
   getById: (id: string) => httpApi!.get<MenuItem>(`/menu/${id}`),
+};
+
+// 分类API
+export const categoryApi = useLocal ? localApi.categoryApi : {
+  getAll: () => httpApi!.get<Category[]>('/categories'),
+  getById: (id: string) => httpApi!.get<Category>(`/categories/${id}`),
+  add: (category: Category) => httpApi!.post<Category>('/categories', category),
+  update: (id: string, updates: Partial<Category>) => httpApi!.put<Category>(`/categories/${id}`, updates),
+  delete: (id: string) => httpApi!.delete(`/categories/${id}`),
+  updateOrder: (categoryIds: string[]) => httpApi!.post('/categories/order', { categoryIds }),
 };
 
 // 购物车API
@@ -101,4 +111,12 @@ export const adminApi = useLocal ? localApi.adminApi : {
   getOrderStats: () => httpApi!.get<any>('/admin/orders/stats'),
   getPayments: () => httpApi!.get<Payment[]>('/admin/payments'),
   getStats: () => httpApi!.get<any>('/admin/stats'),
+  // 分类管理
+  getCategories: () => httpApi!.get<Category[]>('/admin/categories'),
+  addCategory: (category: Category) => httpApi!.post<Category>('/admin/categories', category),
+  updateCategory: (id: string, updates: Partial<Category>) => httpApi!.put<Category>(`/admin/categories/${id}`, updates),
+  deleteCategory: (id: string) => httpApi!.delete(`/admin/categories/${id}`),
+  updateCategoryOrder: (categoryIds: string[]) => httpApi!.post('/admin/categories/order', { categoryIds }),
+  // 销量统计
+  getMenuItemSalesCounts: () => httpApi!.get<Record<string, number>>('/admin/menu/sales'),
 };

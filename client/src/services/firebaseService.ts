@@ -18,7 +18,7 @@ import {
   onSnapshot,
   Timestamp
 } from 'firebase/firestore';
-import { MenuItem, Order, Payment, MerchantBankAccount } from '../types';
+import { MenuItem, Order, Payment, MerchantBankAccount, Category } from '../types';
 
 // Firebase配置
 // 这些配置需要从Firebase控制台获取
@@ -641,6 +641,113 @@ class FirebaseService {
       cardInfo: data.cardInfo,
       createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
     };
+  }
+
+  // ==================== 分类操作 ====================
+
+  async getCategories(): Promise<Category[]> {
+    if (!this.isAvailable()) return [];
+    
+    try {
+      const q = query(collection(this.db!, 'categories'), orderBy('order', 'asc'));
+      const snapshot = await getDocs(q);
+      const categories = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Category));
+      return categories;
+    } catch (error: any) {
+      console.error('获取分类失败:', error);
+      // 如果是索引错误，尝试不带排序的查询
+      if (error.code === 'failed-precondition') {
+        try {
+          const snapshot = await getDocs(collection(this.db!, 'categories'));
+          const categories = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as Category));
+          categories.sort((a, b) => a.order - b.order);
+          return categories;
+        } catch (retryError) {
+          console.error('重试获取分类也失败:', retryError);
+        }
+      }
+      return [];
+    }
+  }
+
+  async getCategoryById(id: string): Promise<Category | null> {
+    if (!this.isAvailable()) return null;
+    
+    try {
+      const docRef = doc(this.db!, 'categories', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Category;
+      }
+      return null;
+    } catch (error) {
+      console.error('从Firebase获取分类失败:', error);
+      return null;
+    }
+  }
+
+  async addCategory(category: Category): Promise<Category> {
+    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    
+    try {
+      const categoryData = this.cleanUndefined({
+        name: category.name,
+        nameEn: category.nameEn || '',
+        order: category.order,
+        isPromotion: category.isPromotion || false,
+        createdAt: Timestamp.now()
+      });
+      
+      await setDoc(doc(this.db!, 'categories', category.id), categoryData);
+      return category;
+    } catch (error) {
+      console.error('添加分类到Firebase失败:', error);
+      throw error;
+    }
+  }
+
+  async updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
+    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    
+    try {
+      const docRef = doc(this.db!, 'categories', id);
+      const updateDataRaw: any = {};
+      
+      if (updates.name !== undefined) updateDataRaw.name = updates.name;
+      if (updates.nameEn !== undefined) updateDataRaw.nameEn = updates.nameEn;
+      if (updates.order !== undefined) updateDataRaw.order = updates.order;
+      if (updates.isPromotion !== undefined) updateDataRaw.isPromotion = updates.isPromotion;
+      
+      const updateData = this.cleanUndefined(updateDataRaw);
+      await setDoc(docRef, updateData, { merge: true });
+      
+      const updatedDoc = await getDoc(docRef);
+      if (updatedDoc.exists()) {
+        return { id: updatedDoc.id, ...updatedDoc.data() } as Category;
+      }
+      throw new Error('更新分类失败');
+    } catch (error) {
+      console.error('更新分类到Firebase失败:', error);
+      throw error;
+    }
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    
+    try {
+      const docRef = doc(this.db!, 'categories', id);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error('从Firebase删除分类失败:', error);
+      throw error;
+    }
   }
 
   // ==================== 实时监听 ====================

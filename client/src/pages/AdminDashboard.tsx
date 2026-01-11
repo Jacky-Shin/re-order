@@ -68,6 +68,13 @@ export default function AdminDashboard() {
       color: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
     },
     {
+      title: '分类管理',
+      description: '管理商品分类和排序',
+      icon: '📂',
+      link: '/admin/categories',
+      color: 'bg-teal-50 hover:bg-teal-100 border-teal-200',
+    },
+    {
       title: t('admin.dashboard.manageOrders'),
       description: t('admin.orders.title'),
       icon: '📦',

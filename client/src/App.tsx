@@ -17,6 +17,7 @@ import AdminMenuPage from './pages/AdminMenuPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import AdminPaymentsPage from './pages/AdminPaymentsPage';
 import AdminOrderStatsPage from './pages/AdminOrderStatsPage';
+import AdminCategoriesPage from './pages/AdminCategoriesPage';
 
 // 内部组件：检测路由并设置isAdmin
 function AppRoutes() {
@@ -42,11 +43,12 @@ function AppRoutes() {
       <Route path="/payment/:orderId" element={<PaymentPage />} />
       <Route path="/qrcode" element={<QRCodePage />} />
       <Route path="/merchant/settings" element={<ProtectedRoute><MerchantSettingsPage /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-      <Route path="/admin/menu" element={<ProtectedRoute><AdminMenuPage /></ProtectedRoute>} />
-      <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
-      <Route path="/admin/payments" element={<ProtectedRoute><AdminPaymentsPage /></ProtectedRoute>} />
-      <Route path="/admin/stats" element={<ProtectedRoute><AdminOrderStatsPage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/menu" element={<ProtectedRoute><AdminMenuPage /></ProtectedRoute>} />
+          <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />
+          <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
+          <Route path="/admin/payments" element={<ProtectedRoute><AdminPaymentsPage /></ProtectedRoute>} />
+          <Route path="/admin/stats" element={<ProtectedRoute><AdminOrderStatsPage /></ProtectedRoute>} />
     </Routes>
   );
 }

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
-import { MenuItem } from '../types';
+import { MenuItem, Category } from '../types';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 
 export default function AdminMenuPage() {
   const navigate = useNavigate();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [salesCounts, setSalesCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
@@ -28,6 +30,8 @@ export default function AdminMenuPage() {
 
   useEffect(() => {
     loadMenuItems();
+    loadCategories();
+    loadSalesCounts();
   }, []);
 
   // 监听数据库更新事件（当其他标签页修改数据时自动刷新）
@@ -38,6 +42,10 @@ export default function AdminMenuPage() {
     const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
       if (key === 'db_menu_items') {
         loadMenuItems();
+        loadSalesCounts();
+      }
+      if (key === 'db_categories') {
+        loadCategories();
       }
     });
     unsubscribes.push(localStorageUnsubscribe);
@@ -46,6 +54,7 @@ export default function AdminMenuPage() {
     if (firebaseService.isAvailable()) {
       const firebaseUnsubscribe = firebaseService.onMenuItemsChange(() => {
         loadMenuItems();
+        loadSalesCounts();
       });
       unsubscribes.push(firebaseUnsubscribe);
     }
@@ -54,6 +63,24 @@ export default function AdminMenuPage() {
       unsubscribes.forEach(unsub => unsub());
     };
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await adminApi.getCategories();
+      setCategories(response.data);
+    } catch (error) {
+      console.error('加载分类失败:', error);
+    }
+  };
+
+  const loadSalesCounts = async () => {
+    try {
+      const response = await adminApi.getMenuItemSalesCounts();
+      setSalesCounts(response.data);
+    } catch (error) {
+      console.error('加载销量统计失败:', error);
+    }
+  };
 
   const loadMenuItems = async () => {
     try {
@@ -101,6 +128,7 @@ export default function AdminMenuPage() {
         await adminApi.addMenuItem(dataToSubmit);
       }
       await loadMenuItems();
+      await loadSalesCounts();
       resetForm();
     } catch (error: any) {
       console.error('保存商品失败:', error);
@@ -256,7 +284,10 @@ export default function AdminMenuPage() {
     setEditingItem(null);
   };
 
-  const categories = Array.from(new Set(menuItems.map(item => item.category)));
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : categoryId;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -323,19 +354,24 @@ export default function AdminMenuPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     分类 <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    list="categories"
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                  />
-                  <datalist id="categories">
+                  >
+                    <option value="">请选择分类</option>
                     {categories.map(cat => (
-                      <option key={cat} value={cat} />
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name} {cat.isPromotion && '(活动)'}
+                      </option>
                     ))}
-                  </datalist>
+                  </select>
+                  {categories.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      暂无分类，请先<a href="/admin/categories" className="text-sb-green hover:underline">创建分类</a>
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -490,6 +526,7 @@ export default function AdminMenuPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">商品</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">价格</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">销量</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
                   </tr>
@@ -513,8 +550,16 @@ export default function AdminMenuPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{item.category}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {getCategoryName(item.category)}
+                        {categories.find(cat => cat.id === item.category)?.isPromotion && (
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">活动</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-sm font-semibold text-sb-green">¥{item.price}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        销量: {salesCounts[item.id] || 0}
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           item.available

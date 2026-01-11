@@ -1,14 +1,24 @@
+export interface Category {
+  id: string;
+  name: string;
+  nameEn?: string;
+  order: number; // 排序顺序，数字越小越靠前
+  isPromotion: boolean; // 是否为活动类别（爆款/低价商品）
+  createdAt: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
   nameEn: string;
-  category: string;
+  category: string; // 分类ID，不再是分类名称
   price: number;
   image: string;
   description: string;
   sizes?: SizeOption[];
   customizations?: Customization[];
   available: boolean;
+  salesCount?: number; // 销量统计
 }
 
 export interface SizeOption {

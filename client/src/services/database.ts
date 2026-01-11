@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core';
-import { MenuItem, Order, Payment, MerchantBankAccount } from '../types';
+import { MenuItem, Order, Payment, MerchantBankAccount, Category } from '../types';
 import { firebaseService } from './firebaseService';
 
 /**
@@ -325,16 +325,160 @@ class DatabaseService {
     }
   }
 
-  async getCategories(): Promise<string[]> {
+  // ==================== 分类操作 ====================
+
+  async getCategories(): Promise<Category[]> {
     if (Capacitor.getPlatform() === 'web') {
-      const items = await this.getMenuItemsFromStorage();
-      const categories = new Set(items.map(item => item.category));
-      return Array.from(categories);
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getCategories();
+      }
+      return this.getCategoriesFromStorage();
     }
     if (!this.db) throw new Error('数据库未初始化');
 
-    const result = await this.db.query('SELECT DISTINCT category FROM menu_items ORDER BY category');
-    return (result.values || []).map((row: any) => row.category);
+    const result = await this.db.query('SELECT * FROM categories ORDER BY `order` ASC, name ASC');
+    return (result.values || []).map(this.mapCategoryFromDB);
+  }
+
+  async getCategoryById(id: string): Promise<Category | null> {
+    if (Capacitor.getPlatform() === 'web') {
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getCategoryById(id);
+      }
+      const categories = await this.getCategoriesFromStorage();
+      return categories.find(cat => cat.id === id) || null;
+    }
+    if (!this.db) throw new Error('数据库未初始化');
+
+    const result = await this.db.query('SELECT * FROM categories WHERE id = ?', [id]);
+    if (!result.values || result.values.length === 0) return null;
+    return this.mapCategoryFromDB(result.values[0]);
+  }
+
+  async addCategory(category: Category): Promise<Category> {
+    if (Capacitor.getPlatform() === 'web') {
+      if (firebaseService.isAvailable()) {
+        try {
+          await firebaseService.addCategory(category);
+          await this.addCategoryToStorage(category);
+          return category;
+        } catch (error) {
+          console.error('Firebase同步分类失败:', error);
+          return this.addCategoryToStorage(category);
+        }
+      }
+      return this.addCategoryToStorage(category);
+    }
+    if (!this.db) throw new Error('数据库未初始化');
+
+    await this.db.run(
+      `INSERT INTO categories (id, name, nameEn, \`order\`, isPromotion, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        category.id,
+        category.name,
+        category.nameEn || '',
+        category.order,
+        category.isPromotion ? 1 : 0,
+        category.createdAt,
+      ]
+    );
+
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.addCategory(category);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+
+    return category;
+  }
+
+  async updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
+    if (Capacitor.getPlatform() === 'web') {
+      if (firebaseService.isAvailable()) {
+        try {
+          const updated = await firebaseService.updateCategory(id, updates);
+          await this.updateCategoryInStorage(id, updates);
+          return updated;
+        } catch (error) {
+          console.error('Firebase同步分类更新失败:', error);
+          return this.updateCategoryInStorage(id, updates);
+        }
+      }
+      return this.updateCategoryInStorage(id, updates);
+    }
+    if (!this.db) throw new Error('数据库未初始化');
+
+    const updateFields: string[] = [];
+    const values: any[] = [];
+
+    if (updates.name !== undefined) {
+      updateFields.push('name = ?');
+      values.push(updates.name);
+    }
+    if (updates.nameEn !== undefined) {
+      updateFields.push('nameEn = ?');
+      values.push(updates.nameEn);
+    }
+    if (updates.order !== undefined) {
+      updateFields.push('`order` = ?');
+      values.push(updates.order);
+    }
+    if (updates.isPromotion !== undefined) {
+      updateFields.push('isPromotion = ?');
+      values.push(updates.isPromotion ? 1 : 0);
+    }
+
+    if (updateFields.length === 0) {
+      const category = await this.getCategoryById(id);
+      if (!category) throw new Error('分类不存在');
+      return category;
+    }
+
+    values.push(id);
+    await this.db.run(`UPDATE categories SET ${updateFields.join(', ')} WHERE id = ?`, values);
+
+    const updated = await this.getCategoryById(id);
+    if (!updated) throw new Error('更新失败');
+
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.updateCategory(id, updates);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+
+    return updated;
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    if (Capacitor.getPlatform() === 'web') {
+      if (firebaseService.isAvailable()) {
+        await firebaseService.deleteCategory(id);
+      }
+      return this.deleteCategoryFromStorage(id);
+    }
+    if (!this.db) throw new Error('数据库未初始化');
+
+    await this.db.run('DELETE FROM categories WHERE id = ?', [id]);
+
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.deleteCategory(id);
+      } catch (error) {
+        console.warn('同步到Firebase失败:', error);
+      }
+    }
+  }
+
+  async updateCategoryOrder(categoryIds: string[]): Promise<void> {
+    // 批量更新分类排序
+    for (let i = 0; i < categoryIds.length; i++) {
+      await this.updateCategory(categoryIds[i], { order: i });
+    }
   }
 
   // ==================== 订单操作 ====================
@@ -1029,6 +1173,48 @@ class DatabaseService {
     const accounts = await this.getMerchantAccountsFromStorage();
     const filtered = accounts.filter(acc => acc.id !== id);
     localStorage.setItem('db_merchant_accounts', JSON.stringify(filtered));
+  }
+
+  // ==================== 分类存储操作 ====================
+
+  private async getCategoriesFromStorage(): Promise<Category[]> {
+    const data = localStorage.getItem('db_categories');
+    return data ? JSON.parse(data) : [];
+  }
+
+  private async addCategoryToStorage(category: Category): Promise<Category> {
+    const categories = await this.getCategoriesFromStorage();
+    categories.push(category);
+    categories.sort((a, b) => a.order - b.order);
+    localStorage.setItem('db_categories', JSON.stringify(categories));
+    return category;
+  }
+
+  private async updateCategoryInStorage(id: string, updates: Partial<Category>): Promise<Category> {
+    const categories = await this.getCategoriesFromStorage();
+    const index = categories.findIndex(cat => cat.id === id);
+    if (index === -1) throw new Error('分类不存在');
+    categories[index] = { ...categories[index], ...updates };
+    categories.sort((a, b) => a.order - b.order);
+    localStorage.setItem('db_categories', JSON.stringify(categories));
+    return categories[index];
+  }
+
+  private async deleteCategoryFromStorage(id: string): Promise<void> {
+    const categories = await this.getCategoriesFromStorage();
+    const filtered = categories.filter(cat => cat.id !== id);
+    localStorage.setItem('db_categories', JSON.stringify(filtered));
+  }
+
+  private mapCategoryFromDB(row: any): Category {
+    return {
+      id: row.id,
+      name: row.name,
+      nameEn: row.nameEn || '',
+      order: row.order || 0,
+      isPromotion: Boolean(row.isPromotion),
+      createdAt: row.createdAt || new Date().toISOString(),
+    };
   }
 }
 

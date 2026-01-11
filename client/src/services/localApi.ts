@@ -1,5 +1,5 @@
 import { databaseService } from './database';
-import { MenuItem, Order, Payment, PaymentMethod, MerchantBankAccount, CartItem } from '../types';
+import { MenuItem, Order, Payment, PaymentMethod, MerchantBankAccount, CartItem, Category } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -26,15 +26,85 @@ class LocalApiService {
     return databaseService.getMenuItemById(id);
   }
 
-  async getCategories(): Promise<string[]> {
+  async getCategories(): Promise<Category[]> {
     await this.initialize();
     return databaseService.getCategories();
   }
 
-  async getMenuItemsByCategory(category: string): Promise<MenuItem[]> {
+  async getCategoryById(id: string): Promise<Category | null> {
+    await this.initialize();
+    return databaseService.getCategoryById(id);
+  }
+
+  async addCategory(category: Category): Promise<Category> {
+    await this.initialize();
+    return databaseService.addCategory(category);
+  }
+
+  async updateCategory(id: string, updates: Partial<Category>): Promise<Category> {
+    await this.initialize();
+    return databaseService.updateCategory(id, updates);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.initialize();
+    return databaseService.deleteCategory(id);
+  }
+
+  async updateCategoryOrder(categoryIds: string[]): Promise<void> {
+    await this.initialize();
+    return databaseService.updateCategoryOrder(categoryIds);
+  }
+
+  async getMenuItemsByCategory(categoryId: string): Promise<MenuItem[]> {
     await this.initialize();
     const items = await databaseService.getMenuItems();
-    return items.filter(item => item.category === category);
+    return items.filter(item => item.category === categoryId);
+  }
+
+  // 计算商品销量（从订单中统计）
+  async getMenuItemSalesCount(menuItemId: string): Promise<number> {
+    await this.initialize();
+    const orders = await databaseService.getOrders();
+    let count = 0;
+    
+    // 只统计已支付的订单
+    const paidOrders = orders.filter(order => 
+      order.paymentStatus === 'completed' || order.paymentMethod === 'cash'
+    );
+    
+    for (const order of paidOrders) {
+      for (const item of order.items) {
+        if (item.menuItemId === menuItemId) {
+          count += item.quantity;
+        }
+      }
+    }
+    
+    return count;
+  }
+
+  // 批量计算所有商品的销量
+  async getAllMenuItemSalesCounts(): Promise<Record<string, number>> {
+    await this.initialize();
+    const orders = await databaseService.getOrders();
+    const salesCounts: Record<string, number> = {};
+    
+    // 只统计已支付的订单
+    const paidOrders = orders.filter(order => 
+      order.paymentStatus === 'completed' || order.paymentMethod === 'cash'
+    );
+    
+    for (const order of paidOrders) {
+      for (const item of order.items) {
+        if (!salesCounts[item.menuItemId]) {
+          salesCounts[item.menuItemId] = 0;
+        }
+        salesCounts[item.menuItemId] += item.quantity;
+      }
+    }
+    
+    return salesCounts;
   }
 
   // ==================== 订单API ====================
