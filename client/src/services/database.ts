@@ -488,9 +488,27 @@ class DatabaseService {
           // 现在更新Firebase
           const updated = await firebaseService.updateOrder(id, updates);
           console.log('✅ 订单已成功同步到Firebase');
-          // 同时更新localStorage作为备份
-          await this.updateOrderInStorage(id, updates);
-          console.log('✅ 订单已保存到本地备份');
+          // 同时更新localStorage作为备份（如果本地不存在，先添加）
+          try {
+            await this.updateOrderInStorage(id, updates);
+            console.log('✅ 订单已保存到本地备份');
+          } catch (localError: any) {
+            // 如果本地存储中不存在，先添加订单
+            if (localError.message && localError.message.includes('订单不存在')) {
+              console.warn('⚠️ 订单在本地存储中不存在，先添加到本地存储...', id);
+              try {
+                // 使用更新后的订单数据添加到本地存储
+                await this.addOrderToStorage(updated);
+                console.log('✅ 订单已添加到本地存储');
+              } catch (addError) {
+                console.warn('⚠️ 添加订单到本地存储失败（非关键）:', addError);
+                // 即使添加失败也不抛出错误，因为Firebase已经更新成功了
+              }
+            } else {
+              console.warn('⚠️ 更新本地存储失败（非关键）:', localError);
+              // 即使更新失败也不抛出错误，因为Firebase已经更新成功了
+            }
+          }
           return updated;
         } catch (error: any) {
           console.error('❌ Firebase同步订单更新失败，错误详情:', error);
