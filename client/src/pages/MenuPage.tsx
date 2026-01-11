@@ -144,29 +144,6 @@ export default function MenuPage() {
     }
   };
 
-  // 按分类分组商品，并按分类order排序
-  const getMenuItemsByCategory = () => {
-    const sortedCategories = [...categories].sort((a, b) => (a.order || 0) - (b.order || 0));
-    const itemsByCategory = new Map<string, MenuItem[]>();
-    
-    // 初始化所有分类
-    sortedCategories.forEach(cat => {
-      itemsByCategory.set(cat.id, []);
-    });
-    
-    // 将商品分配到对应分类
-    menuItems.forEach(item => {
-      const categoryItems = itemsByCategory.get(item.category) || [];
-      categoryItems.push(item);
-      itemsByCategory.set(item.category, categoryItems);
-    });
-    
-    return sortedCategories.map(cat => ({
-      category: cat,
-      items: itemsByCategory.get(cat.id) || []
-    })).filter(group => group.items.length > 0); // 只显示有商品的分类
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-sb-light-green/30 via-white to-gray-50 pb-24">
       {/* 店铺图片 - 顶部展示 */}
