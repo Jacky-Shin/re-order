@@ -16,7 +16,6 @@ export default function AdminCategoriesPage() {
     name: '',
     nameEn: '',
     order: 0,
-    isPromotion: false,
   });
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
@@ -69,7 +68,6 @@ export default function AdminCategoriesPage() {
           name: formData.name!,
           nameEn: formData.nameEn || '',
           order: formData.order ?? categories.length,
-          isPromotion: formData.isPromotion || false,
           createdAt: new Date().toISOString(),
         };
         await adminApi.addCategory(newCategory);
@@ -98,7 +96,6 @@ export default function AdminCategoriesPage() {
       name: category.name,
       nameEn: category.nameEn,
       order: category.order,
-      isPromotion: category.isPromotion,
     });
     setShowAddForm(true);
   };
@@ -108,7 +105,6 @@ export default function AdminCategoriesPage() {
       name: '',
       nameEn: '',
       order: categories.length,
-      isPromotion: false,
     });
     setShowAddForm(false);
     setEditingCategory(null);
@@ -205,19 +201,6 @@ export default function AdminCategoriesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isPromotion"
-                  checked={formData.isPromotion}
-                  onChange={(e) => setFormData({ ...formData, isPromotion: e.target.checked })}
-                  className="w-4 h-4 text-sb-green border-gray-300 rounded focus:ring-sb-green"
-                />
-                <label htmlFor="isPromotion" className="ml-2 text-sm text-gray-700">
-                  设为活动类别（爆款/低价商品）
-                </label>
-              </div>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -277,11 +260,6 @@ export default function AdminCategoriesPage() {
                           <span className="font-medium text-gray-900">{category.name}</span>
                           {category.nameEn && (
                             <span className="text-sm text-gray-500">({category.nameEn})</span>
-                          )}
-                          {category.isPromotion && (
-                            <span className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded-full">
-                              活动
-                            </span>
                           )}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">

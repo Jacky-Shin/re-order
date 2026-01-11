@@ -372,14 +372,13 @@ class DatabaseService {
     if (!this.db) throw new Error('数据库未初始化');
 
     await this.db.run(
-      `INSERT INTO categories (id, name, nameEn, \`order\`, isPromotion, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO categories (id, name, nameEn, \`order\`, createdAt)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         category.id,
         category.name,
         category.nameEn || '',
         category.order,
-        category.isPromotion ? 1 : 0,
         category.createdAt,
       ]
     );
@@ -425,10 +424,6 @@ class DatabaseService {
     if (updates.order !== undefined) {
       updateFields.push('`order` = ?');
       values.push(updates.order);
-    }
-    if (updates.isPromotion !== undefined) {
-      updateFields.push('isPromotion = ?');
-      values.push(updates.isPromotion ? 1 : 0);
     }
 
     if (updateFields.length === 0) {
@@ -1212,7 +1207,6 @@ class DatabaseService {
       name: row.name,
       nameEn: row.nameEn || '',
       order: row.order || 0,
-      isPromotion: Boolean(row.isPromotion),
       createdAt: row.createdAt || new Date().toISOString(),
     };
   }

@@ -363,7 +363,7 @@ export default function AdminMenuPage() {
                     <option value="">请选择分类</option>
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.name} {cat.isPromotion && '(活动)'}
+                        {cat.name}
                       </option>
                     ))}
                   </select>
@@ -552,9 +552,6 @@ export default function AdminMenuPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {getCategoryName(item.category)}
-                        {categories.find(cat => cat.id === item.category)?.isPromotion && (
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-800 rounded-full">活动</span>
-                        )}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-sb-green">¥{item.price}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">

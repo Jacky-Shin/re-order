@@ -3,7 +3,6 @@ export interface Category {
   name: string;
   nameEn?: string;
   order: number; // 排序顺序，数字越小越靠前
-  isPromotion: boolean; // 是否为活动类别（爆款/低价商品）
   createdAt: string;
 }
 

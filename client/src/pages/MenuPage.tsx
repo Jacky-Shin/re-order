@@ -69,10 +69,9 @@ export default function MenuPage() {
     try {
       const response = await categoryApi.getAll();
       setCategories(response.data);
-      if (response.data.length > 0) {
-        // 优先选择活动类别，否则选择第一个
-        const promotionCategory = response.data.find(cat => cat.isPromotion);
-        setSelectedCategoryId(promotionCategory ? promotionCategory.id : response.data[0].id);
+      // 只在首次加载且没有选中分类时，才设置默认分类
+      if (response.data.length > 0 && !selectedCategoryId) {
+        setSelectedCategoryId(response.data[0].id);
       }
     } catch (error) {
       console.error('加载分类失败:', error);
@@ -149,9 +148,6 @@ export default function MenuPage() {
               }`}
             >
               {category.name}
-              {category.isPromotion && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
             </button>
           ))}
         </div>

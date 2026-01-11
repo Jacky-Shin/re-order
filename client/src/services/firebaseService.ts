@@ -700,7 +700,6 @@ class FirebaseService {
         name: category.name,
         nameEn: category.nameEn || '',
         order: category.order,
-        isPromotion: category.isPromotion || false,
         createdAt: Timestamp.now()
       });
       
@@ -722,7 +721,6 @@ class FirebaseService {
       if (updates.name !== undefined) updateDataRaw.name = updates.name;
       if (updates.nameEn !== undefined) updateDataRaw.nameEn = updates.nameEn;
       if (updates.order !== undefined) updateDataRaw.order = updates.order;
-      if (updates.isPromotion !== undefined) updateDataRaw.isPromotion = updates.isPromotion;
       
       const updateData = this.cleanUndefined(updateDataRaw);
       await setDoc(docRef, updateData, { merge: true });
