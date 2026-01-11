@@ -45,28 +45,15 @@ if (typeof window !== 'undefined') {
     });
 }
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registered:', registration);
-      })
-      .catch((error) => {
-        // Service Worker 注册失败不影响应用功能，只记录错误
-        console.warn('Service Worker registration failed (non-critical):', error);
-      });
-  });
-  
-  // 监听 Service Worker 错误
-  navigator.serviceWorker.addEventListener('error', (event) => {
-    console.warn('Service Worker error (non-critical):', event);
-  });
-  
-  // 监听 Service Worker 消息
-  navigator.serviceWorker.addEventListener('message', (event) => {
-    console.log('Service Worker message:', event.data);
-  });
+// Service Worker 暂时禁用，避免错误
+// 如果需要 PWA 功能，可以稍后重新启用
+if (false && 'serviceWorker' in navigator) {
+  // 先注销所有现有的 Service Worker
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister().catch(() => {});
+    });
+  }).catch(() => {});
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
