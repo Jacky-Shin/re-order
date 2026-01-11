@@ -374,6 +374,14 @@ class FirebaseService {
         updates: updates
       });
       
+      // 先检查订单是否存在
+      const existing = await this.getOrderById(id);
+      if (!existing) {
+        console.warn('⚠️ 订单在Firebase中不存在:', id);
+        // 不抛出错误，让调用者处理（可能会从本地同步）
+        throw new Error('订单不存在');
+      }
+      
       const docRef = doc(this.db!, 'orders', id);
       const updateDataRaw: any = {};
       
@@ -410,10 +418,7 @@ class FirebaseService {
       const updateData = this.cleanUndefined(updateDataRaw);
       
       if (Object.keys(updateData).length === 0) {
-        console.warn('⚠️ 没有需要更新的字段');
-        // 如果没有更新字段，直接返回现有订单
-        const existing = await this.getOrderById(id);
-        if (!existing) throw new Error('订单不存在');
+        console.warn('⚠️ 没有需要更新的字段，返回现有订单');
         return existing;
       }
       

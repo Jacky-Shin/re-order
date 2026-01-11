@@ -458,14 +458,50 @@ class DatabaseService {
       if (firebaseService.isAvailable()) {
         console.log('✅ Firebase可用，使用Firebase同步更新（跨设备）');
         try {
+          // 先检查订单在本地是否存在
+          const localOrder = await this.getOrderById(id);
+          if (!localOrder) {
+            console.warn('⚠️ 订单在本地不存在，无法更新');
+            throw new Error('订单不存在');
+          }
+          
+          // 检查订单在Firebase中是否存在
+          const firebaseOrder = await firebaseService.getOrderById(id);
+          if (!firebaseOrder) {
+            console.warn('⚠️ 订单在Firebase中不存在，先同步到Firebase');
+            // 如果订单在本地存在但Firebase不存在，先创建到Firebase
+            await firebaseService.addOrder(localOrder);
+            console.log('✅ 订单已同步到Firebase');
+          }
+          
+          // 现在更新Firebase
           const updated = await firebaseService.updateOrder(id, updates);
           console.log('✅ 订单已成功同步到Firebase');
           // 同时更新localStorage作为备份
           await this.updateOrderInStorage(id, updates);
           console.log('✅ 订单已保存到本地备份');
           return updated;
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Firebase同步订单更新失败，错误详情:', error);
+          // 如果错误是"订单不存在"，检查本地存储
+          if (error.message && error.message.includes('订单不存在')) {
+            const localOrder = await this.getOrderById(id);
+            if (localOrder) {
+              console.warn('⚠️ 订单在本地存在但Firebase不存在，先同步到Firebase再更新');
+              try {
+                // 先同步到Firebase
+                await firebaseService.addOrder(localOrder);
+                // 然后更新
+                const updated = await firebaseService.updateOrder(id, updates);
+                await this.updateOrderInStorage(id, updates);
+                return updated;
+              } catch (retryError) {
+                console.error('❌ 重试同步失败:', retryError);
+                // 如果还是失败，只更新本地
+                return this.updateOrderInStorage(id, updates);
+              }
+            }
+          }
           console.warn('⚠️ 回退到本地存储（不会跨设备同步）');
           // 如果Firebase失败，至少保存到本地
           return this.updateOrderInStorage(id, updates);
