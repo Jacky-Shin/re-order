@@ -210,14 +210,43 @@ class FirebaseService {
   // ==================== 订单操作 ====================
 
   async getOrders(): Promise<Order[]> {
-    if (!this.isAvailable()) return [];
+    if (!this.isAvailable()) {
+      console.warn('⚠️ Firebase不可用，无法从Firebase获取订单');
+      return [];
+    }
     
     try {
+      console.log('📥 正在从Firebase读取订单列表...');
+      // 注意：orderBy('createdAt', 'desc') 需要createdAt字段有索引
+      // 如果出错，可以改为不排序，然后在客户端排序
       const q = query(collection(this.db!, 'orders'), orderBy('createdAt', 'desc'));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => this.mapOrderFromFirestore(doc));
-    } catch (error) {
-      console.error('获取订单失败:', error);
+      const orders = snapshot.docs.map(doc => this.mapOrderFromFirestore(doc));
+      console.log(`✅ 从Firebase成功获取 ${orders.length} 个订单`);
+      return orders;
+    } catch (error: any) {
+      console.error('❌ 从Firebase获取订单失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        code: error?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // 如果是因为缺少索引，尝试不使用排序
+      if (error?.code === 'failed-precondition') {
+        console.warn('⚠️ 尝试不使用排序获取订单...');
+        try {
+          const snapshot = await getDocs(collection(this.db!, 'orders'));
+          const orders = snapshot.docs.map(doc => this.mapOrderFromFirestore(doc));
+          // 在客户端按createdAt排序
+          orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          console.log(`✅ 从Firebase成功获取 ${orders.length} 个订单（客户端排序）`);
+          return orders;
+        } catch (retryError) {
+          console.error('❌ 重试获取订单也失败:', retryError);
+        }
+      }
+      
       return [];
     }
   }

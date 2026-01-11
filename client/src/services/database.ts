@@ -341,6 +341,10 @@ class DatabaseService {
 
   async getOrders(): Promise<Order[]> {
     if (Capacitor.getPlatform() === 'web') {
+      // Web环境：优先使用Firebase，否则使用localStorage
+      if (firebaseService.isAvailable()) {
+        return firebaseService.getOrders();
+      }
       return this.getOrdersFromStorage();
     }
     if (!this.db) throw new Error('数据库未初始化');

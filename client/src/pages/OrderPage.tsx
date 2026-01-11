@@ -42,9 +42,15 @@ export default function OrderPage() {
       await clearCart();
       // 跳转到支付页面
       navigate(`/payment/${order.data.id}`);
-    } catch (error) {
-      console.error('提交订单失败:', error);
-      alert(t('common.error'));
+    } catch (error: any) {
+      console.error('❌ 提交订单失败:', error);
+      console.error('错误详情:', {
+        message: error?.message || String(error),
+        response: error?.response?.data,
+        stack: error?.stack
+      });
+      const errorMessage = error?.response?.data?.error || error?.message || t('common.error');
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
