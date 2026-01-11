@@ -295,7 +295,8 @@ class FirebaseService {
       });
       
       // Firebase Firestore不支持undefined值，需要转换为null或过滤掉
-      const orderData: any = {
+      // 先构建基础数据对象
+      const orderDataRaw: any = {
         orderNumber: order.orderNumber,
         items: order.items,
         totalAmount: order.totalAmount,
@@ -305,32 +306,35 @@ class FirebaseService {
       
       // 只添加非undefined的字段
       if (order.pickupNumber !== undefined && order.pickupNumber !== null) {
-        orderData.pickupNumber = order.pickupNumber;
+        orderDataRaw.pickupNumber = order.pickupNumber;
       }
       if (order.pickupDate !== undefined && order.pickupDate !== null) {
-        orderData.pickupDate = order.pickupDate;
+        orderDataRaw.pickupDate = order.pickupDate;
       }
       if (order.paymentMethod !== undefined && order.paymentMethod !== null) {
-        orderData.paymentMethod = order.paymentMethod;
+        orderDataRaw.paymentMethod = order.paymentMethod;
       }
       if (order.paymentStatus !== undefined && order.paymentStatus !== null) {
-        orderData.paymentStatus = order.paymentStatus;
+        orderDataRaw.paymentStatus = order.paymentStatus;
       }
       if (order.paymentId !== undefined && order.paymentId !== null) {
-        orderData.paymentId = order.paymentId;
+        orderDataRaw.paymentId = order.paymentId;
       }
       if (order.tableNumber !== undefined && order.tableNumber !== null) {
-        orderData.tableNumber = order.tableNumber;
+        orderDataRaw.tableNumber = order.tableNumber;
       }
       if (order.customerName !== undefined && order.customerName !== null) {
-        orderData.customerName = order.customerName;
+        orderDataRaw.customerName = order.customerName;
       }
       if (order.phone !== undefined && order.phone !== null) {
-        orderData.phone = order.phone;
+        orderDataRaw.phone = order.phone;
       }
       if (order.notifiedAt !== undefined && order.notifiedAt !== null) {
-        orderData.notifiedAt = Timestamp.fromDate(new Date(order.notifiedAt));
+        orderDataRaw.notifiedAt = Timestamp.fromDate(new Date(order.notifiedAt));
       }
+      
+      // 清理所有undefined值（包括嵌套在items数组中的）
+      const orderData = this.cleanUndefined(orderDataRaw);
       
       await setDoc(doc(this.db!, 'orders', order.id), orderData);
       
@@ -352,27 +356,30 @@ class FirebaseService {
     
     try {
       const docRef = doc(this.db!, 'orders', id);
-      const updateData: any = {};
+      const updateDataRaw: any = {};
       
       // 只添加非undefined的字段，Firebase不支持undefined
-      if (updates.status !== undefined) updateData.status = updates.status;
+      if (updates.status !== undefined) updateDataRaw.status = updates.status;
       if (updates.paymentMethod !== undefined) {
-        updateData.paymentMethod = updates.paymentMethod === null ? null : updates.paymentMethod;
+        updateDataRaw.paymentMethod = updates.paymentMethod === null ? null : updates.paymentMethod;
       }
       if (updates.paymentStatus !== undefined) {
-        updateData.paymentStatus = updates.paymentStatus === null ? null : updates.paymentStatus;
+        updateDataRaw.paymentStatus = updates.paymentStatus === null ? null : updates.paymentStatus;
       }
       if (updates.paymentId !== undefined) {
-        updateData.paymentId = updates.paymentId === null ? null : updates.paymentId;
+        updateDataRaw.paymentId = updates.paymentId === null ? null : updates.paymentId;
       }
       if (updates.notifiedAt !== undefined) {
         // 如果notifiedAt是null，需要明确设置为null（Firebase支持null）
         if (updates.notifiedAt === null) {
-          updateData.notifiedAt = null;
+          updateDataRaw.notifiedAt = null;
         } else {
-          updateData.notifiedAt = Timestamp.fromDate(new Date(updates.notifiedAt));
+          updateDataRaw.notifiedAt = Timestamp.fromDate(new Date(updates.notifiedAt));
         }
       }
+      
+      // 清理所有undefined值
+      const updateData = this.cleanUndefined(updateDataRaw);
       
       await setDoc(docRef, updateData, { merge: true });
       
@@ -404,7 +411,7 @@ class FirebaseService {
     if (!this.isAvailable()) throw new Error('Firebase未配置');
     
     try {
-      const paymentData: any = {
+      const paymentDataRaw: any = {
         orderId: payment.orderId,
         amount: payment.amount,
         method: payment.method,
@@ -414,8 +421,11 @@ class FirebaseService {
       
       // 只添加非undefined的字段
       if (payment.cardInfo !== undefined && payment.cardInfo !== null) {
-        paymentData.cardInfo = payment.cardInfo;
+        paymentDataRaw.cardInfo = payment.cardInfo;
       }
+      
+      // 清理所有undefined值
+      const paymentData = this.cleanUndefined(paymentDataRaw);
       
       await setDoc(doc(this.db!, 'payments', payment.id), paymentData);
       return payment;
@@ -446,7 +456,7 @@ class FirebaseService {
     if (!this.isAvailable()) throw new Error('Firebase未配置');
     
     try {
-      const accountData: any = {
+      const accountDataRaw: any = {
         bankName: account.bankName,
         accountName: account.accountName,
         accountNumber: account.accountNumber,
@@ -456,14 +466,17 @@ class FirebaseService {
       
       // 只添加非undefined的字段
       if (account.cardNumber !== undefined && account.cardNumber !== null) {
-        accountData.cardNumber = account.cardNumber;
+        accountDataRaw.cardNumber = account.cardNumber;
       }
       if (account.expiryDate !== undefined && account.expiryDate !== null) {
-        accountData.expiryDate = account.expiryDate;
+        accountDataRaw.expiryDate = account.expiryDate;
       }
       if (account.cvv !== undefined && account.cvv !== null) {
-        accountData.cvv = account.cvv;
+        accountDataRaw.cvv = account.cvv;
       }
+      
+      // 清理所有undefined值
+      const accountData = this.cleanUndefined(accountDataRaw);
       
       await setDoc(doc(this.db!, 'merchant_accounts', account.id), accountData);
       return account;
@@ -478,23 +491,26 @@ class FirebaseService {
     
     try {
       const docRef = doc(this.db!, 'merchant_accounts', id);
-      const updateData: any = {};
+      const updateDataRaw: any = {};
       
-      if (account.bankName !== undefined) updateData.bankName = account.bankName;
-      if (account.accountName !== undefined) updateData.accountName = account.accountName;
-      if (account.accountNumber !== undefined) updateData.accountNumber = account.accountNumber;
-      if (account.isDefault !== undefined) updateData.isDefault = account.isDefault;
+      if (account.bankName !== undefined) updateDataRaw.bankName = account.bankName;
+      if (account.accountName !== undefined) updateDataRaw.accountName = account.accountName;
+      if (account.accountNumber !== undefined) updateDataRaw.accountNumber = account.accountNumber;
+      if (account.isDefault !== undefined) updateDataRaw.isDefault = account.isDefault;
       
       // 只添加非undefined的字段
       if (account.cardNumber !== undefined) {
-        updateData.cardNumber = account.cardNumber === null ? null : account.cardNumber;
+        updateDataRaw.cardNumber = account.cardNumber === null ? null : account.cardNumber;
       }
       if (account.expiryDate !== undefined) {
-        updateData.expiryDate = account.expiryDate === null ? null : account.expiryDate;
+        updateDataRaw.expiryDate = account.expiryDate === null ? null : account.expiryDate;
       }
       if (account.cvv !== undefined) {
-        updateData.cvv = account.cvv === null ? null : account.cvv;
+        updateDataRaw.cvv = account.cvv === null ? null : account.cvv;
       }
+      
+      // 清理所有undefined值
+      const updateData = this.cleanUndefined(updateDataRaw);
       
       await setDoc(docRef, updateData, { merge: true });
       
@@ -513,6 +529,35 @@ class FirebaseService {
   }
 
   // ==================== 辅助方法 ====================
+
+  /**
+   * 递归清理对象中的所有undefined值
+   * Firebase不支持undefined，需要移除或转换为null
+   */
+  private cleanUndefined(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return null;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cleanUndefined(item)).filter(item => item !== undefined);
+    }
+    
+    if (typeof obj === 'object' && obj.constructor === Object) {
+      const cleaned: any = {};
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+          if (value !== undefined) {
+            cleaned[key] = this.cleanUndefined(value);
+          }
+        }
+      }
+      return cleaned;
+    }
+    
+    return obj;
+  }
 
   private mapOrderFromFirestore(doc: any): Order {
     const data = doc.data();
