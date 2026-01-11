@@ -59,10 +59,14 @@ export default function AdminOrdersPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
+      console.log('📝 更新订单状态...', { orderId, newStatus });
       await adminApi.updateOrderStatus(orderId, newStatus);
+      console.log('✅ 订单状态更新成功');
       await loadOrders();
     } catch (error: any) {
-      alert(error.response?.data?.error || '更新状态失败');
+      console.error('❌ 更新订单状态失败:', error);
+      const errorMessage = error?.response?.data?.error || error?.message || '更新状态失败';
+      alert(errorMessage);
     }
   };
 
@@ -256,13 +260,15 @@ export default function AdminOrdersPage() {
                         <button
                           onClick={async () => {
                             try {
+                              console.log('📢 通知客户取餐...', { orderId: order.id });
                               const response = await adminApi.notifyCustomer(order.id);
-                              if (response.data.success) {
-                                alert(t('admin.orders.notified'));
-                                await loadOrders();
-                              }
+                              console.log('✅ 通知客户成功:', response);
+                              alert(t('admin.orders.notified'));
+                              await loadOrders();
                             } catch (error: any) {
-                              alert(error.response?.data?.error || t('common.error'));
+                              console.error('❌ 通知客户失败:', error);
+                              const errorMessage = error?.response?.data?.error || error?.message || t('common.error');
+                              alert(errorMessage);
                             }
                           }}
                           className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"

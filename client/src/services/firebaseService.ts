@@ -266,17 +266,28 @@ class FirebaseService {
   }
 
   async getOrderById(id: string): Promise<Order | null> {
-    if (!this.isAvailable()) return null;
+    if (!this.isAvailable()) {
+      console.warn('⚠️ Firebase不可用，无法从Firebase获取订单');
+      return null;
+    }
     
     try {
       const docRef = doc(this.db!, 'orders', id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        return this.mapOrderFromFirestore(docSnap);
+        const order = this.mapOrderFromFirestore(docSnap);
+        console.log('✅ 从Firebase成功获取订单:', id);
+        return order;
       }
+      console.warn('⚠️ 订单不存在:', id);
       return null;
     } catch (error) {
-      console.error('获取订单失败:', error);
+      console.error('❌ 从Firebase获取订单失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return null;
     }
   }
@@ -352,9 +363,17 @@ class FirebaseService {
   }
 
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order> {
-    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    if (!this.isAvailable()) {
+      console.error('❌ Firebase不可用，无法更新订单');
+      throw new Error('Firebase未配置');
+    }
     
     try {
+      console.log('📤 正在更新订单到Firebase...', {
+        orderId: id,
+        updates: updates
+      });
+      
       const docRef = doc(this.db!, 'orders', id);
       const updateDataRaw: any = {};
       
@@ -373,21 +392,47 @@ class FirebaseService {
         // 如果notifiedAt是null，需要明确设置为null（Firebase支持null）
         if (updates.notifiedAt === null) {
           updateDataRaw.notifiedAt = null;
-        } else {
+        } else if (updates.notifiedAt) {
           updateDataRaw.notifiedAt = Timestamp.fromDate(new Date(updates.notifiedAt));
         }
+      }
+      if (updates.tableNumber !== undefined) {
+        updateDataRaw.tableNumber = updates.tableNumber === null ? null : updates.tableNumber;
+      }
+      if (updates.customerName !== undefined) {
+        updateDataRaw.customerName = updates.customerName === null ? null : updates.customerName;
+      }
+      if (updates.phone !== undefined) {
+        updateDataRaw.phone = updates.phone === null ? null : updates.phone;
       }
       
       // 清理所有undefined值
       const updateData = this.cleanUndefined(updateDataRaw);
       
+      if (Object.keys(updateData).length === 0) {
+        console.warn('⚠️ 没有需要更新的字段');
+        // 如果没有更新字段，直接返回现有订单
+        const existing = await this.getOrderById(id);
+        if (!existing) throw new Error('订单不存在');
+        return existing;
+      }
+      
       await setDoc(docRef, updateData, { merge: true });
+      console.log('✅ 订单已成功更新到Firebase');
       
       const updated = await this.getOrderById(id);
-      if (!updated) throw new Error('更新失败');
+      if (!updated) {
+        console.error('❌ 更新后无法获取订单');
+        throw new Error('更新失败：无法获取更新后的订单');
+      }
       return updated;
     } catch (error) {
-      console.error('更新订单失败:', error);
+      console.error('❌ 更新订单到Firebase失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }

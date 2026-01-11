@@ -449,13 +449,31 @@ class DatabaseService {
   async updateOrder(id: string, updates: Partial<Order>): Promise<Order> {
     if (Capacitor.getPlatform() === 'web') {
       // Web环境：优先使用Firebase，否则使用localStorage
+      console.log('📝 更新订单...', { 
+        orderId: id, 
+        updates: updates,
+        firebaseAvailable: firebaseService.isAvailable()
+      });
+      
       if (firebaseService.isAvailable()) {
-        const updated = await firebaseService.updateOrder(id, updates);
-        // 同时更新localStorage作为备份
-        await this.updateOrderInStorage(id, updates);
-        return updated;
+        console.log('✅ Firebase可用，使用Firebase同步更新（跨设备）');
+        try {
+          const updated = await firebaseService.updateOrder(id, updates);
+          console.log('✅ 订单已成功同步到Firebase');
+          // 同时更新localStorage作为备份
+          await this.updateOrderInStorage(id, updates);
+          console.log('✅ 订单已保存到本地备份');
+          return updated;
+        } catch (error) {
+          console.error('❌ Firebase同步订单更新失败，错误详情:', error);
+          console.warn('⚠️ 回退到本地存储（不会跨设备同步）');
+          // 如果Firebase失败，至少保存到本地
+          return this.updateOrderInStorage(id, updates);
+        }
+      } else {
+        console.warn('⚠️ Firebase不可用，仅保存到本地存储（不会跨设备同步）');
+        return this.updateOrderInStorage(id, updates);
       }
-      return this.updateOrderInStorage(id, updates);
     }
     if (!this.db) throw new Error('数据库未初始化');
 

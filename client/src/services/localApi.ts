@@ -89,20 +89,38 @@ class LocalApiService {
 
   async updateOrderStatus(id: string, status: Order['status']): Promise<Order> {
     await this.initialize();
-    return databaseService.updateOrder(id, { status });
+    try {
+      console.log('📝 更新订单状态...', { id, status });
+      const updated = await databaseService.updateOrder(id, { status });
+      console.log('✅ 订单状态更新成功');
+      return updated;
+    } catch (error) {
+      console.error('❌ 更新订单状态失败:', error);
+      throw error;
+    }
   }
 
   async notifyCustomer(id: string): Promise<Order> {
     await this.initialize();
-    const order = await databaseService.getOrderById(id);
-    if (!order) throw new Error('订单不存在');
+    try {
+      console.log('📢 通知客户取餐...', { orderId: id });
+      const order = await databaseService.getOrderById(id);
+      if (!order) {
+        console.error('❌ 订单不存在:', id);
+        throw new Error('订单不存在');
+      }
 
-    const updatedOrder = await databaseService.updateOrder(id, {
-      status: 'ready',
-      notifiedAt: new Date().toISOString(),
-    });
-
-    return updatedOrder;
+      const updatedOrder = await databaseService.updateOrder(id, {
+        status: 'ready',
+        notifiedAt: new Date().toISOString(),
+      });
+      
+      console.log('✅ 通知客户成功');
+      return updatedOrder;
+    } catch (error) {
+      console.error('❌ 通知客户失败:', error);
+      throw error;
+    }
   }
 
   async getAllOrders(): Promise<Order[]> {
