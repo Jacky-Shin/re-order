@@ -256,6 +256,15 @@ export default {
       chinese: '中文',
       spanish: 'Español',
     },
+    login: {
+      title: 'Admin Panel',
+      subtitle: 'Please enter your username to access',
+      username: 'Username',
+      usernamePlaceholder: 'Please enter your username',
+      usernameRequired: 'Please enter your username',
+      submit: 'Login',
+      backToMenu: 'Back to Menu',
+    },
   },
   // Merchant settings
   merchant: {

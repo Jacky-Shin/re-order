@@ -255,6 +255,15 @@ export default {
       chinese: '中文',
       spanish: 'Español',
     },
+    login: {
+      title: '商家后台',
+      subtitle: '请输入用户名登录',
+      username: '用户名',
+      usernamePlaceholder: '请输入用户名',
+      usernameRequired: '请输入用户名',
+      submit: '登录',
+      backToMenu: '返回点餐页面',
+    },
   },
   // 商家设置
   merchant: {

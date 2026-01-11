@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -13,8 +14,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // 检查是否已经认证（存储在sessionStorage中，关闭浏览器后失效）
-    const authStatus = sessionStorage.getItem('adminAuthenticated');
+    // 检查是否已经认证（存储在localStorage中，记住登录状态）
+    const authStatus = localStorage.getItem('adminAuthenticated');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
     }
@@ -46,23 +47,29 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
  * 商家后台登录组件
  */
 function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
-  const [password, setPassword] = useState('');
+  const { t } = useLanguage();
+  const [username, setUsername] = useState(() => {
+    // 从localStorage读取已保存的账号
+    return localStorage.getItem('adminUsername') || '';
+  });
   const [error, setError] = useState('');
 
-  // 商家后台默认密码（在实际生产环境中应该更复杂，并存储在服务器端）
-  const ADMIN_PASSWORD = 'admin123'; // 简单密码，仅用于演示
-
+  // 商家后台默认账号（可以是任何非空字符串）
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (password === ADMIN_PASSWORD) {
-      sessionStorage.setItem('adminAuthenticated', 'true');
-      onSuccess();
-    } else {
-      setError('Contraseña incorrecta, por favor intente de nuevo');
-      setPassword('');
+    if (!username.trim()) {
+      setError(t('admin.login.usernameRequired') || 'Por favor ingrese el nombre de usuario');
+      return;
     }
+
+    // 任何非空账号都可以登录（简化登录流程）
+    // 保存账号到localStorage
+    localStorage.setItem('adminUsername', username.trim());
+    // 保存认证状态到localStorage（记住登录）
+    localStorage.setItem('adminAuthenticated', 'true');
+    onSuccess();
   };
 
   return (
@@ -71,24 +78,24 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-sb-green rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-sb-dark-green mb-2">Panel de Administración</h1>
-          <p className="text-gray-600">Por favor ingrese la contraseña para acceder al panel de administración</p>
+          <h1 className="text-2xl font-bold text-sb-dark-green mb-2">{t('admin.login.title') || 'Panel de Administración'}</h1>
+          <p className="text-gray-600">{t('admin.login.subtitle') || 'Por favor ingrese el nombre de usuario para acceder'}</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña
+              {t('admin.login.username') || 'Nombre de Usuario'}
             </label>
             <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-              placeholder="Por favor ingrese la contraseña"
+              placeholder={t('admin.login.usernamePlaceholder') || 'Por favor ingrese el nombre de usuario'}
               autoFocus
               required
             />
@@ -101,7 +108,7 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
             type="submit"
             className="w-full bg-sb-green text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors"
           >
-            Iniciar Sesión
+            {t('admin.login.submit') || 'Iniciar Sesión'}
           </button>
         </form>
 
@@ -110,7 +117,7 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
             onClick={() => window.location.href = '/menu'}
             className="text-sm text-gray-600 hover:text-sb-green transition-colors"
           >
-            ← Volver a la Página de Pedidos
+            ← {t('admin.login.backToMenu') || 'Volver a la Página de Pedidos'}
           </button>
         </div>
       </div>

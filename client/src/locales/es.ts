@@ -256,6 +256,15 @@ export default {
       chinese: '中文',
       spanish: 'Español',
     },
+    login: {
+      title: 'Panel de Administración',
+      subtitle: 'Por favor ingrese el nombre de usuario para acceder',
+      username: 'Nombre de Usuario',
+      usernamePlaceholder: 'Por favor ingrese el nombre de usuario',
+      usernameRequired: 'Por favor ingrese el nombre de usuario',
+      submit: 'Iniciar Sesión',
+      backToMenu: 'Volver a la Página de Pedidos',
+    },
   },
   // Configuración del comerciante
   merchant: {
