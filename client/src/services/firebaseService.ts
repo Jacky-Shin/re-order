@@ -301,11 +301,19 @@ class FirebaseService {
       const docRef = doc(this.db!, 'orders', id);
       const updateData: any = {};
       
+      // 只添加非undefined的字段，Firebase不支持undefined
       if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.paymentMethod !== undefined) updateData.paymentMethod = updates.paymentMethod;
       if (updates.paymentStatus !== undefined) updateData.paymentStatus = updates.paymentStatus;
       if (updates.paymentId !== undefined) updateData.paymentId = updates.paymentId;
-      if (updates.notifiedAt !== undefined) updateData.notifiedAt = updates.notifiedAt;
+      if (updates.notifiedAt !== undefined) {
+        // 如果notifiedAt是null，需要明确设置为null（Firebase支持null）
+        if (updates.notifiedAt === null) {
+          updateData.notifiedAt = null;
+        } else {
+          updateData.notifiedAt = Timestamp.fromDate(new Date(updates.notifiedAt));
+        }
+      }
       
       await setDoc(docRef, updateData, { merge: true });
       
