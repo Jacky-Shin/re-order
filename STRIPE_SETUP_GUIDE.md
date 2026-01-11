@@ -38,19 +38,22 @@
 
 #### 测试环境（推荐先使用）
 ```
-STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
 STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 ```
 
 #### 生产环境（上线后使用）
 ```
-STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxx
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxx
 STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxxx
 ```
 
-⚠️ **安全提示：**
+⚠️ **重要提示：**
+- `VITE_STRIPE_PUBLISHABLE_KEY` - 前端使用（必须以 `VITE_` 开头，Vite才能识别）
+- `STRIPE_SECRET_KEY` - 后端API使用（Serverless Function）
 - Secret Key 必须保密，只存储在服务器端（Vercel环境变量）
 - Publishable Key 可以安全地在前端使用
+- 确保选择所有环境（Production, Preview, Development）
 
 ### 4. 测试支付
 
