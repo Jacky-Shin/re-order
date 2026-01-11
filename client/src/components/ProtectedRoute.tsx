@@ -111,15 +111,6 @@ function AdminLogin({ onSuccess }: { onSuccess: () => void }) {
             {t('admin.login.submit') || 'Iniciar Sesión'}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => window.location.href = '/menu'}
-            className="text-sm text-gray-600 hover:text-sb-green transition-colors"
-          >
-            ← {t('admin.login.backToMenu') || 'Volver a la Página de Pedidos'}
-          </button>
-        </div>
       </div>
     </div>
   );
