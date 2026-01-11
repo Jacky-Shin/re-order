@@ -53,8 +53,19 @@ if ('serviceWorker' in navigator) {
         console.log('Service Worker registered:', registration);
       })
       .catch((error) => {
-        console.log('Service Worker registration failed:', error);
+        // Service Worker 注册失败不影响应用功能，只记录错误
+        console.warn('Service Worker registration failed (non-critical):', error);
       });
+  });
+  
+  // 监听 Service Worker 错误
+  navigator.serviceWorker.addEventListener('error', (event) => {
+    console.warn('Service Worker error (non-critical):', event);
+  });
+  
+  // 监听 Service Worker 消息
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    console.log('Service Worker message:', event.data);
   });
 }
 
