@@ -103,7 +103,7 @@ export default function AdminShopPage() {
       const formData = new FormData();
       formData.append('image', file);
 
-      const uploadResponse = await fetch('/api/upload', {
+      const uploadResponse = await fetch('/api/upload/image', {
         method: 'POST',
         body: formData,
       });

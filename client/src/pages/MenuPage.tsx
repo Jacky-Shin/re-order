@@ -30,10 +30,13 @@ export default function MenuPage() {
   useEffect(() => {
     if (selectedCategoryId && !searchQuery) {
       loadMenuByCategory(selectedCategoryId);
-    } else if (!searchQuery) {
+    } else if (!searchQuery && !selectedCategoryId && categories.length > 0) {
+      // 如果没有选中分类但有分类数据，默认选中第一个分类
+      setSelectedCategoryId(categories[0].id);
+    } else if (!searchQuery && !selectedCategoryId && categories.length === 0) {
       loadAllMenu();
     }
-  }, [selectedCategoryId]);
+  }, [selectedCategoryId, searchQuery]);
 
   // 搜索功能
   useEffect(() => {
@@ -93,10 +96,11 @@ export default function MenuPage() {
   const loadCategories = async () => {
     try {
       const response = await categoryApi.getAll();
-      setCategories(response.data);
+      const sortedCategories = response.data.sort((a, b) => (a.order || 0) - (b.order || 0));
+      setCategories(sortedCategories);
       // 只在首次加载且没有选中分类时，才设置默认分类
-      if (response.data.length > 0 && !selectedCategoryId) {
-        setSelectedCategoryId(response.data[0].id);
+      if (sortedCategories.length > 0 && !selectedCategoryId) {
+        setSelectedCategoryId(sortedCategories[0].id);
       }
     } catch (error) {
       console.error('加载分类失败:', error);
@@ -257,22 +261,22 @@ export default function MenuPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-6">
-        {/* Categories - 现代化侧边栏 */}
-        <div className="card sticky top-[88px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto w-40 flex-shrink-0 hidden md:block">
-          <div className="p-2">
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 py-2 mb-1">
-              {t('menu.category')}
-            </div>
-            <div className="flex flex-col gap-1">
+      <div className="max-w-7xl mx-auto px-4 py-6 flex gap-4 md:gap-6">
+        {/* Categories - 左侧分类列表（移动端可滑动） */}
+        <div className="w-20 md:w-32 lg:w-40 flex-shrink-0">
+          <div className="sticky top-[88px] h-fit max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="flex flex-col gap-1 md:gap-2">
               {categories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategoryId(category.id)}
-                  className={`px-4 py-3 text-left font-medium rounded-xl transition-all duration-300 ${
+                  onClick={() => {
+                    setSelectedCategoryId(category.id);
+                    setSearchQuery(''); // 清除搜索
+                  }}
+                  className={`px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-all duration-300 whitespace-nowrap ${
                     selectedCategoryId === category.id
-                      ? 'bg-gradient-to-r from-sb-green to-sb-dark-green text-white shadow-lg shadow-sb-green/30'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-sb-green'
+                      ? 'bg-gradient-to-r from-sb-green to-sb-dark-green text-white shadow-md'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-sb-green bg-white'
                   }`}
                 >
                   {category.name}
@@ -344,76 +348,61 @@ export default function MenuPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-8">
-            {(() => {
-              const menuGroups = getMenuItemsByCategory();
-              const displayGroups = selectedCategoryId 
-                ? menuGroups.filter(g => g.category.id === selectedCategoryId)
-                : menuGroups;
-              
-              return displayGroups.map((group, groupIndex) => (
-                <div key={group.category.id} className="animate-fade-in" style={{ animationDelay: `${groupIndex * 100}ms` }}>
-                  {/* 分类标题 */}
-                  <div className="mb-4 flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-gray-900">{group.category.name}</h2>
-                    <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
-                    <span className="text-sm text-gray-500 font-medium">{group.items.length} {t('menu.items')}</span>
-                  </div>
-                  
-                  {/* 商品网格 */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    {group.items.map((item, itemIndex) => (
-                      <div
-                        key={item.id}
-                        onClick={() => navigate(`/item/${item.id}`)}
-                        className="card card-hover cursor-pointer overflow-hidden group animate-fade-in"
-                        style={{ animationDelay: `${itemIndex * 50}ms` }}
-                      >
-                        <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
-                            }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                          {!item.available && (
-                            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                              <span className="text-white font-bold text-lg">{t('menu.soldOut')}</span>
-                            </div>
-                          )}
-                          {item.available && (
-                            <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                              <svg className="w-4 h-4 text-sb-green" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.name}</h3>
-                          <p className="text-xs text-gray-500 mb-3 font-medium">{item.nameEn}</p>
-                          <div className="flex items-center justify-between">
-                            <p className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                              ¥{item.price.toFixed(2)}
-                            </p>
-                            {item.available && (
-                              <div className="w-8 h-8 bg-sb-green/10 rounded-full flex items-center justify-center group-hover:bg-sb-green group-hover:scale-110 transition-all duration-300">
-                                <svg className="w-5 h-5 text-sb-green group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+          // 右侧商品网格 - 显示当前选中分类的商品（不显示分类标题）
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {menuItems.map((item, itemIndex) => (
+              <div
+                key={item.id}
+                onClick={() => navigate(`/item/${item.id}`)}
+                className="card card-hover cursor-pointer overflow-hidden group animate-fade-in"
+                style={{ animationDelay: `${itemIndex * 50}ms` }}
+              >
+                <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 relative overflow-hidden">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  {!item.available && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">{t('menu.soldOut')}</span>
+                    </div>
+                  )}
+                  {item.available && (
+                    <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <svg className="w-4 h-4 text-sb-green" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.name}</h3>
+                  <p className="text-xs text-gray-500 mb-3 font-medium">{item.nameEn}</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
+                      ¥{item.price.toFixed(2)}
+                    </p>
+                    {item.available && (
+                      <div className="w-8 h-8 bg-sb-green/10 rounded-full flex items-center justify-center group-hover:bg-sb-green group-hover:scale-110 transition-all duration-300">
+                        <svg className="w-5 h-5 text-sb-green group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
-              ));
-            })()}
+              </div>
+            ))}
+            {menuItems.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <p className="text-gray-500">{t('menu.empty')}</p>
+              </div>
+            )}
           </div>
         )}
         </div>
