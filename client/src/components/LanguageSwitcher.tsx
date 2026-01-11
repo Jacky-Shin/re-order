@@ -8,51 +8,52 @@ export default function LanguageSwitcher({ variant = 'dark' }: LanguageSwitcherP
   const { language, setLanguage } = useLanguage();
 
   const languages = [
-    { code: 'zh' as const, label: '中文', short: 'zh' },
-    { code: 'en' as const, label: 'English', short: 'en' },
-    { code: 'es' as const, label: 'Español', short: 'es' },
+    { code: 'zh' as const, label: '中文', short: 'zh', color: 'bg-red-500', hoverColor: 'hover:bg-red-600' },
+    { code: 'en' as const, label: 'English', short: 'en', color: 'bg-blue-500', hoverColor: 'hover:bg-blue-600' },
+    { code: 'es' as const, label: 'Español', short: 'es', color: 'bg-green-500', hoverColor: 'hover:bg-green-600' },
   ];
 
+  const currentIndex = languages.findIndex(lang => lang.code === language);
+
   if (variant === 'light') {
-    // 用户端浅色背景样式
+    // 用户端浅色背景样式 - 分段控制器样式
     return (
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg px-1 py-1 border border-gray-200">
-        {languages.map((lang) => (
+      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200 shadow-sm">
+        {languages.map((lang, index) => (
           <button
             key={lang.code}
             onClick={() => setLanguage(lang.code)}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-300 ${
               language === lang.code
-                ? 'bg-sb-green text-white shadow-sm'
+                ? `${lang.color} text-white shadow-md transform scale-105`
                 : 'text-gray-600 hover:bg-gray-200'
             }`}
             title={lang.label}
           >
-            {lang.short}
+            {lang.short.toUpperCase()}
           </button>
         ))}
       </div>
     );
   }
 
-  // 商家端深色背景样式
+  // 商家端深色背景样式 - 分段控制器样式
   return (
-    <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md rounded-lg px-1 py-1 border border-white/20">
+    <div className="flex items-center gap-1 bg-white/10 backdrop-blur-md rounded-lg p-1 border border-white/20 shadow-lg">
       {languages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => setLanguage(lang.code)}
           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-300 ${
             language === lang.code
-              ? 'bg-white text-indigo-600 shadow-sm'
+              ? `${lang.color} text-white shadow-md transform scale-105`
               : 'text-white/80 hover:text-white hover:bg-white/10'
           }`}
           title={lang.label}
         >
-          {lang.short}
+          {lang.short.toUpperCase()}
         </button>
       ))}
     </div>
   );
 }
-

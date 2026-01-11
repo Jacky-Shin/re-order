@@ -29,23 +29,8 @@ function detectLanguage(isAdmin: boolean): Language {
     return saved as Language;
   }
   
-  if (isAdmin) {
-    // 商家后台：如果没有保存的语言，默认中文
-    return 'zh';
-  } else {
-    // 用户端：根据浏览器语言自动检测
-    const browserLang = navigator.language || (navigator as any).userLanguage || '';
-    const langLower = browserLang.toLowerCase();
-    if (langLower.startsWith('es')) {
-      return 'es'; // 西班牙语
-    } else if (langLower.startsWith('en')) {
-      return 'en'; // 英语
-    } else if (langLower.startsWith('zh')) {
-      return 'zh'; // 中文
-    }
-    // 默认使用英语
-    return 'en';
-  }
+  // 默认使用西班牙语
+  return 'es';
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
