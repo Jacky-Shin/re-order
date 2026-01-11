@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { Category } from '../types';
-import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminCategoriesPage() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
