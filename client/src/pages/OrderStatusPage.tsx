@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { orderApi, paymentApi } from '../api/client';
 import { Order, Payment } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { onDatabaseUpdate } from '../utils/storageSync';
+import { firebaseService } from '../services/firebaseService';
 
 export default function OrderStatusPage() {
   const { orderNumber, orderId } = useParams<{ orderNumber?: string; orderId?: string }>();
@@ -21,6 +23,54 @@ export default function OrderStatusPage() {
     }
   }, [orderId, orderNumber]);
 
+  // 实时监听订单更新（Firebase + localStorage）
+  useEffect(() => {
+    if (!order) return;
+
+    const unsubscribes: (() => void)[] = [];
+    
+    // localStorage同步
+    const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
+      if (key === 'db_orders') {
+        console.log('📢 检测到订单更新，刷新订单状态...');
+        if (orderId) {
+          loadOrderById(orderId);
+        } else if (orderNumber) {
+          loadOrderByNumber(orderNumber);
+        }
+      }
+    });
+    unsubscribes.push(localStorageUnsubscribe);
+    
+    // Firebase实时同步
+    if (firebaseService.isAvailable() && orderId) {
+      console.log('📢 启用Firebase实时监听订单更新...', orderId);
+      const firebaseUnsubscribe = firebaseService.onOrdersChange((orders: Order[]) => {
+        const updatedOrder = orders.find(o => o.id === orderId);
+        if (updatedOrder) {
+          console.log('📢 Firebase订单状态已更新:', updatedOrder.status);
+          setOrder(updatedOrder);
+          // 如果订单已完成或已取消，停止轮询
+          if (updatedOrder.status === 'completed' || updatedOrder.status === 'cancelled') {
+            setPolling(false);
+          }
+          // 加载支付信息
+          if (updatedOrder.paymentId) {
+            paymentApi.getById(updatedOrder.paymentId)
+              .then(response => setPayment(response.data))
+              .catch(error => console.error('加载支付信息失败:', error));
+          }
+        }
+      });
+      unsubscribes.push(firebaseUnsubscribe);
+    }
+    
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }, [order, orderId, orderNumber]);
+
+  // 轮询作为后备方案（如果实时监听不可用）
   useEffect(() => {
     if (!polling || !order) return;
 
@@ -33,7 +83,7 @@ export default function OrderStatusPage() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [polling, orderId, orderNumber]);
+  }, [polling, orderId, orderNumber, order]);
 
   const loadOrderById = async (id: string) => {
     try {
