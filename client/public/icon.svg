@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- 背景圆形 - 星巴克绿色 -->
+  <circle cx="256" cy="256" r="240" fill="#00704A"/>
+  
+  <!-- 中心白色圆形 -->
+  <circle cx="256" cy="256" r="90" fill="#FFFFFF"/>
+  
+  <!-- 星巴克标志简化版 - 双尾美人鱼轮廓 -->
+  <g transform="translate(256, 256)">
+    <!-- 主体 -->
+    <path d="M -50,-15 Q -35,-35 -15,-25 Q 5,-15 25,-25 Q 45,-35 60,-15 Q 50,5 40,25 Q 20,45 0,35 Q -20,45 -40,25 Q -50,5 -50,-15 Z" fill="#00704A"/>
+    <!-- 皇冠 -->
+    <path d="M -25,-45 L -15,-55 L 0,-65 L 15,-55 L 25,-45 L 20,-40 L 10,-45 L 0,-50 L -10,-45 L -20,-40 Z" fill="#FFFFFF"/>
+    <!-- 眼睛 -->
+    <circle cx="-15" cy="-5" r="3" fill="#FFFFFF"/>
+    <circle cx="15" cy="-5" r="3" fill="#FFFFFF"/>
+  </g>
+  
+  <!-- 外圈装饰 -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="#FFFFFF" stroke-width="6" opacity="0.2"/>
+</svg>

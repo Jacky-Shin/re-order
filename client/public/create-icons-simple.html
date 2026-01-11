@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Starbucks Icons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            background: #00704A;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a3d;
+        }
+    </style>
+</head>
+<body>
+    <h1>星巴克图标生成器</h1>
+    <p>点击按钮生成图标文件</p>
+    
+    <canvas id="canvas512" width="512" height="512"></canvas>
+    <canvas id="canvas192" width="192" height="192"></canvas>
+    
+    <div>
+        <button onclick="generateAll()">生成所有图标</button>
+        <button onclick="download512()">下载 512x512</button>
+        <button onclick="download192()">下载 192x192</button>
+    </div>
+    
+    <script>
+        function drawStarbucksIcon(ctx, size) {
+            const center = size / 2;
+            const bgRadius = size * 0.47;
+            const innerRadius = size * 0.18;
+            const scale = size / 512;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, size, size);
+            
+            // 背景圆形 - 星巴克绿色
+            ctx.fillStyle = '#00704A';
+            ctx.beginPath();
+            ctx.arc(center, center, bgRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 中心白色圆形
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(center, center, innerRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 星巴克标志简化版
+            ctx.fillStyle = '#00704A';
+            ctx.beginPath();
+            const offset = center;
+            
+            // 绘制双尾美人鱼轮廓
+            ctx.moveTo(offset - 50 * scale, offset - 15 * scale);
+            ctx.quadraticCurveTo(offset - 35 * scale, offset - 35 * scale, offset - 15 * scale, offset - 25 * scale);
+            ctx.quadraticCurveTo(offset + 5 * scale, offset - 15 * scale, offset + 25 * scale, offset - 25 * scale);
+            ctx.quadraticCurveTo(offset + 45 * scale, offset - 35 * scale, offset + 60 * scale, offset - 15 * scale);
+            ctx.quadraticCurveTo(offset + 50 * scale, offset + 5 * scale, offset + 40 * scale, offset + 25 * scale);
+            ctx.quadraticCurveTo(offset + 20 * scale, offset + 45 * scale, offset, offset + 35 * scale);
+            ctx.quadraticCurveTo(offset - 20 * scale, offset + 45 * scale, offset - 40 * scale, offset + 25 * scale);
+            ctx.quadraticCurveTo(offset - 50 * scale, offset + 5 * scale, offset - 50 * scale, offset - 15 * scale);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 皇冠
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.moveTo(offset - 25 * scale, offset - 45 * scale);
+            ctx.lineTo(offset - 15 * scale, offset - 55 * scale);
+            ctx.lineTo(offset, offset - 65 * scale);
+            ctx.lineTo(offset + 15 * scale, offset - 55 * scale);
+            ctx.lineTo(offset + 25 * scale, offset - 45 * scale);
+            ctx.lineTo(offset + 20 * scale, offset - 40 * scale);
+            ctx.lineTo(offset + 10 * scale, offset - 45 * scale);
+            ctx.lineTo(offset, offset - 50 * scale);
+            ctx.lineTo(offset - 10 * scale, offset - 45 * scale);
+            ctx.lineTo(offset - 20 * scale, offset - 40 * scale);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function generateAll() {
+            download512();
+            setTimeout(() => download192(), 500);
+            alert('图标已生成并下载！请将文件保存到 client/public/ 目录');
+        }
+        
+        function download512() {
+            const canvas = document.getElementById('canvas512');
+            const ctx = canvas.getContext('2d');
+            drawStarbucksIcon(ctx, 512);
+            downloadCanvas(canvas, 'icon-512.png');
+        }
+        
+        function download192() {
+            const canvas = document.getElementById('canvas192');
+            const ctx = canvas.getContext('2d');
+            drawStarbucksIcon(ctx, 192);
+            downloadCanvas(canvas, 'icon-192.png');
+        }
+        
+        // 页面加载时自动绘制预览
+        window.onload = () => {
+            const canvas512 = document.getElementById('canvas512');
+            const ctx512 = canvas512.getContext('2d');
+            drawStarbucksIcon(ctx512, 512);
+            
+            const canvas192 = document.getElementById('canvas192');
+            const ctx192 = canvas192.getContext('2d');
+            drawStarbucksIcon(ctx192, 192);
+        };
+    </script>
+</body>
+</html>

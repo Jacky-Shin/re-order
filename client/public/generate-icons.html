@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <h1>Icon Generator</h1>
+    <canvas id="canvas" width="512" height="512" style="border: 1px solid #ccc;"></canvas>
+    <div>
+        <button onclick="generateIcons()">Generate Icons</button>
+    </div>
+    <script>
+        function generateIcons() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制星巴克风格图标
+            // 背景
+            ctx.fillStyle = '#00704A';
+            ctx.beginPath();
+            ctx.arc(256, 256, 240, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 中心圆形
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(256, 256, 80, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 星巴克标志简化版
+            ctx.fillStyle = '#00704A';
+            ctx.beginPath();
+            ctx.moveTo(196, 236);
+            ctx.quadraticCurveTo(216, 216, 236, 226);
+            ctx.quadraticCurveTo(256, 236, 276, 226);
+            ctx.quadraticCurveTo(296, 216, 316, 236);
+            ctx.quadraticCurveTo(306, 256, 296, 276);
+            ctx.quadraticCurveTo(276, 296, 256, 286);
+            ctx.quadraticCurveTo(236, 296, 216, 276);
+            ctx.quadraticCurveTo(206, 256, 196, 236);
+            ctx.fill();
+            
+            // 皇冠
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.moveTo(226, 206);
+            ctx.lineTo(236, 196);
+            ctx.lineTo(256, 186);
+            ctx.lineTo(276, 196);
+            ctx.lineTo(286, 206);
+            ctx.lineTo(281, 211);
+            ctx.lineTo(271, 206);
+            ctx.lineTo(256, 201);
+            ctx.lineTo(241, 206);
+            ctx.lineTo(231, 211);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 下载图标
+            const sizes = [192, 512];
+            sizes.forEach(size => {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = size;
+                tempCanvas.height = size;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(canvas, 0, 0, size, size);
+                
+                const link = document.createElement('a');
+                link.download = `icon-${size}.png`;
+                link.href = tempCanvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+        
+        // 自动生成
+        window.onload = () => {
+            setTimeout(generateIcons, 1000);
+        };
+    </script>
+</body>
+</html>
