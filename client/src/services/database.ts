@@ -908,9 +908,21 @@ class DatabaseService {
   private async updateOrderInStorage(id: string, updates: Partial<Order>): Promise<Order> {
     const orders = await this.getOrdersFromStorage();
     const index = orders.findIndex(order => order.id === id);
-    if (index === -1) throw new Error('订单不存在');
+    if (index === -1) {
+      console.error('❌ 订单在本地存储中不存在:', id);
+      throw new Error('订单不存在');
+    }
     orders[index] = { ...orders[index], ...updates };
     localStorage.setItem('db_orders', JSON.stringify(orders));
+    // 触发存储更新事件（用于跨标签页同步）
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'db_orders',
+        newValue: localStorage.getItem('db_orders'),
+        url: window.location.href,
+        storageArea: localStorage,
+      }));
+    }
     return orders[index];
   }
 
