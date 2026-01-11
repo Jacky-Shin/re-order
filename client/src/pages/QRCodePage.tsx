@@ -6,16 +6,23 @@ export default function QRCodePage() {
   const [baseUrl, setBaseUrl] = useState(() => {
     // 获取当前页面的基础URL
     if (typeof window !== 'undefined') {
-      const url = `${window.location.protocol}//${window.location.host}`;
+      const protocol = window.location.protocol;
+      const host = window.location.host;
+      const url = `${protocol}//${host}`;
+      console.log('🔍 检测到的基础URL:', url);
       // 确保URL不包含路径
       return url;
     }
     return 'http://localhost:3000';
   });
 
+  // 确保URL格式正确，移除末尾斜杠
+  const cleanBaseUrl = baseUrl.replace(/\/$/, '');
   const qrUrl = tableNumber 
-    ? `${baseUrl}/menu?table=${encodeURIComponent(tableNumber)}`
-    : `${baseUrl}/menu`;
+    ? `${cleanBaseUrl}/menu?table=${encodeURIComponent(tableNumber)}`
+    : `${cleanBaseUrl}/menu`;
+  
+  console.log('📱 生成的二维码URL:', qrUrl);
   
   const handleTableNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -63,21 +70,27 @@ export default function QRCodePage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">设置</h2>
           
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              基础URL
-            </label>
-            <input
-              type="text"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-              placeholder="http://localhost:3000"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              部署到服务器后，请修改为实际域名
-            </p>
-          </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                基础URL
+              </label>
+              <input
+                type="text"
+                value={baseUrl}
+                onChange={(e) => {
+                  const newUrl = e.target.value.replace(/\/$/, ''); // 移除末尾斜杠
+                  setBaseUrl(newUrl);
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
+                placeholder="https://your-domain.vercel.app"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                当前自动检测: {baseUrl} | 如需修改，请手动输入正确的域名
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                💡 提示：二维码URL将指向: {qrUrl}
+              </p>
+            </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
