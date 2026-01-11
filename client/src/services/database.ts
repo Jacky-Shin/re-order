@@ -384,13 +384,31 @@ class DatabaseService {
   async addOrder(order: Order): Promise<Order> {
     if (Capacitor.getPlatform() === 'web') {
       // Web环境：优先使用Firebase，否则使用localStorage
+      console.log('📝 添加订单到数据库...', { 
+        orderId: order.id, 
+        orderNumber: order.orderNumber,
+        firebaseAvailable: firebaseService.isAvailable()
+      });
+      
       if (firebaseService.isAvailable()) {
-        await firebaseService.addOrder(order);
-        // 同时保存到localStorage作为备份
-        await this.addOrderToStorage(order);
-        return order;
+        console.log('✅ Firebase可用，使用Firebase同步订单（跨设备）');
+        try {
+          await firebaseService.addOrder(order);
+          console.log('✅ 订单已成功同步到Firebase');
+          // 同时保存到localStorage作为备份
+          await this.addOrderToStorage(order);
+          console.log('✅ 订单已保存到本地备份');
+          return order;
+        } catch (error) {
+          console.error('❌ Firebase同步订单失败，错误详情:', error);
+          console.warn('⚠️ 回退到本地存储（不会跨设备同步）');
+          // 如果Firebase失败，至少保存到本地
+          return this.addOrderToStorage(order);
+        }
+      } else {
+        console.warn('⚠️ Firebase不可用，仅保存到本地存储（不会跨设备同步）');
+        return this.addOrderToStorage(order);
       }
-      return this.addOrderToStorage(order);
     }
     if (!this.db) throw new Error('数据库未初始化');
 
