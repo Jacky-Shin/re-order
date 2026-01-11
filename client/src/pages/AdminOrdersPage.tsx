@@ -225,7 +225,7 @@ export default function AdminOrdersPage() {
                       <span className="text-xs text-green-600">{t('admin.orders.paid')}</span>
                     )}
                     {order.paymentStatus === 'pending' && order.paymentMethod === 'cash' && (
-                      <span className="text-xs text-yellow-600 font-semibold">💵 待支付现金</span>
+                      <span className="text-xs text-yellow-600 font-semibold">{t('admin.orders.cashPaymentPending')}</span>
                     )}
                   </div>
                 </div>

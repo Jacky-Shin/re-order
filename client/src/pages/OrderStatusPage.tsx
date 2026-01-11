@@ -5,6 +5,7 @@ import { Order, Payment } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function OrderStatusPage() {
   const { orderNumber, orderId } = useParams<{ orderNumber?: string; orderId?: string }>();
@@ -197,60 +198,69 @@ export default function OrderStatusPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-sb-light-green/20 via-white to-gray-50">
       {/* Header */}
-      <div className="bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={() => navigate('/menu')}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <h1 className="ml-4 text-lg font-semibold">{t('orderStatus.title')}</h1>
+      <div className="bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm border-b border-gray-100">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate('/menu')}
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h1 className="ml-4 text-xl font-bold text-gray-900">{t('orderStatus.title')}</h1>
+          </div>
+          <LanguageSwitcher variant="light" />
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Notification Banner */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="card mb-6 overflow-hidden">
           {order.status === 'pending' && (
-            <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <span className="text-2xl">⏳</span>
-              <div>
-                <h3 className="font-semibold text-yellow-900">{t('orderStatus.notification.queuing')}</h3>
-                <p className="text-sm text-yellow-700 mt-1">{t('orderStatus.notification.queuingDesc')}</p>
+            <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400">
+              <div className="w-16 h-16 bg-yellow-100 rounded-2xl flex items-center justify-center text-3xl">
+                ⏳
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-yellow-900 text-lg">{t('orderStatus.notification.queuing')}</h3>
+                <p className="text-sm text-yellow-700 mt-1 font-medium">{t('orderStatus.notification.queuingDesc')}</p>
               </div>
             </div>
           )}
           {order.status === 'preparing' && (
-            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <span className="text-2xl">👨‍🍳</span>
-              <div>
-                <h3 className="font-semibold text-blue-900">{t('orderStatus.notification.preparing')}</h3>
-                <p className="text-sm text-blue-700 mt-1">{t('orderStatus.notification.preparingDesc')}</p>
+            <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-3xl">
+                👨‍🍳
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-900 text-lg">{t('orderStatus.notification.preparing')}</h3>
+                <p className="text-sm text-blue-700 mt-1 font-medium">{t('orderStatus.notification.preparingDesc')}</p>
               </div>
             </div>
           )}
           {order.status === 'ready' && (
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <span className="text-2xl">✅</span>
-              <div>
-                <h3 className="font-semibold text-green-900">{t('orderStatus.notification.ready')}</h3>
-                <p className="text-sm text-green-700 mt-1">{t('orderStatus.notification.readyDesc')}</p>
+            <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-400">
+              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-3xl">
+                ✅
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-green-900 text-lg">{t('orderStatus.notification.ready')}</h3>
+                <p className="text-sm text-green-700 mt-1 font-medium">{t('orderStatus.notification.readyDesc')}</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Order Status */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 text-center">
-          <div className={`inline-block px-4 py-2 rounded-full mb-4 ${getStatusColor(order.status)}`}>
+        <div className="card p-8 mb-6 text-center">
+          <div className={`inline-block px-6 py-3 rounded-2xl mb-6 text-lg font-bold shadow-lg ${getStatusColor(order.status)}`}>
             {getStatusText(order.status)}
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('order.orderNumber')}: {order.orderNumber}</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('order.orderNumber')}: <span className="bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">{order.orderNumber}</span></h2>
           {order.pickupNumber && (
             <div className="mb-3">
               <p className="text-lg font-semibold text-sb-green">
@@ -323,8 +333,11 @@ export default function OrderStatusPage() {
         </div>
 
         {/* Order Items */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <h3 className="text-lg font-semibold mb-4">订单明细</h3>
+        <div className="card p-6 mb-6">
+          <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+            <div className="w-1 h-6 bg-gradient-to-b from-sb-green to-sb-dark-green rounded-full"></div>
+            {t('orderStatus.orderItems')}
+          </h3>
           <div className="space-y-4">
             {order.items.map((item) => (
               <div key={item.id} className="flex gap-4">
@@ -365,8 +378,11 @@ export default function OrderStatusPage() {
 
         {/* Customer Info */}
         {(order.customerName || order.phone) && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <h3 className="text-lg font-semibold mb-4">联系信息</h3>
+          <div className="card p-6 mb-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <div className="w-1 h-6 bg-gradient-to-b from-sb-green to-sb-dark-green rounded-full"></div>
+              {t('orderStatus.contactInfo')}
+            </h3>
             <div className="space-y-2 text-sm">
               {order.customerName && (
                 <div className="flex justify-between">
@@ -386,36 +402,39 @@ export default function OrderStatusPage() {
 
         {/* Payment Info */}
         {payment && (
-          <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-            <h3 className="text-lg font-semibold mb-3">支付信息</h3>
+          <div className="card p-6 mb-6">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <div className="w-1 h-6 bg-gradient-to-b from-sb-green to-sb-dark-green rounded-full"></div>
+              {t('orderStatus.paymentInfo')}
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">支付方式</span>
+                <span className="text-gray-600">{t('orderStatus.paymentMethod')}</span>
                 <span className="font-medium">{getPaymentMethodText(payment.method)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">支付状态</span>
+                <span className="text-gray-600">{t('orderStatus.paymentStatus')}</span>
                 <span className={`font-medium ${
                   payment.status === 'completed' ? 'text-green-600' :
                   payment.status === 'processing' ? 'text-blue-600' :
                   payment.status === 'failed' ? 'text-red-600' : 'text-gray-600'
                 }`}>
-                  {payment.status === 'completed' ? '已支付' :
-                   payment.status === 'processing' ? '处理中' :
-                   payment.status === 'failed' ? '支付失败' : '待支付'}
+                  {payment.status === 'completed' ? t('orderStatus.paid') :
+                   payment.status === 'processing' ? t('orderStatus.processing') :
+                   payment.status === 'failed' ? t('orderStatus.failed') : t('orderStatus.pending')}
                 </span>
               </div>
               {payment.transactionId && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">交易号</span>
+                  <span className="text-gray-600">{t('orderStatus.transactionId')}</span>
                   <span className="font-mono text-xs">{payment.transactionId}</span>
                 </div>
               )}
               {payment.paidAt && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">支付时间</span>
+                  <span className="text-gray-600">{t('orderStatus.paidAt')}</span>
                   <span className="text-gray-700">
-                    {new Date(payment.paidAt).toLocaleString('zh-CN')}
+                    {new Date(payment.paidAt).toLocaleString()}
                   </span>
                 </div>
               )}
@@ -427,28 +446,30 @@ export default function OrderStatusPage() {
         {order.status === 'pending' && order.paymentStatus !== 'completed' && (
           <button
             onClick={() => navigate(`/payment/${order.id}`)}
-            className="w-full bg-sb-green text-white py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-colors mb-4"
+            className="btn-primary w-full mb-4"
           >
-            {order.paymentStatus === 'processing' ? '支付处理中...' : '立即支付'}
+            {order.paymentStatus === 'processing' ? t('orderStatus.paymentProcessing') : t('orderStatus.payNow')}
           </button>
         )}
 
         {order.status === 'ready' && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-2 text-green-700">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="font-semibold">您的订单已准备好，请前往取餐台取餐</span>
+          <div className="card-gradient border-2 border-green-300 rounded-2xl p-6 mb-6 shadow-lg">
+            <div className="flex items-center gap-3 text-green-700">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <span className="font-bold text-lg">{t('orderStatus.orderReadyMessage')}</span>
             </div>
           </div>
         )}
 
         <button
           onClick={() => navigate('/menu')}
-          className="w-full border-2 border-sb-green text-sb-green py-3 rounded-lg font-semibold hover:bg-sb-light-green transition-colors"
+          className="btn-secondary w-full"
         >
-          继续点餐
+          {t('orderStatus.continueShopping')}
         </button>
       </div>
     </div>

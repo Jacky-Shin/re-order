@@ -470,6 +470,12 @@ class FirebaseService {
       };
       
       // 只添加非undefined的字段
+      if (payment.transactionId !== undefined && payment.transactionId !== null) {
+        paymentDataRaw.transactionId = payment.transactionId;
+      }
+      if (payment.paidAt !== undefined && payment.paidAt !== null) {
+        paymentDataRaw.paidAt = Timestamp.fromDate(new Date(payment.paidAt));
+      }
       if (payment.cardInfo !== undefined && payment.cardInfo !== null) {
         paymentDataRaw.cardInfo = payment.cardInfo;
       }
@@ -478,6 +484,7 @@ class FirebaseService {
       const paymentData = this.cleanUndefined(paymentDataRaw);
       
       await setDoc(doc(this.db!, 'payments', payment.id), paymentData);
+      console.log('✅ 支付记录已保存到Firebase:', payment.id);
       return payment;
     } catch (error) {
       console.error('添加支付记录失败:', error);
@@ -638,6 +645,8 @@ class FirebaseService {
       amount: data.amount,
       method: data.method,
       status: data.status,
+      transactionId: data.transactionId,
+      paidAt: data.paidAt?.toDate?.()?.toISOString(),
       cardInfo: data.cardInfo,
       createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
     };

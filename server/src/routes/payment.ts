@@ -70,32 +70,32 @@ paymentRouter.post('/process', async (req: Request, res: Response) => {
         message: '订单已提交，请等待商家备餐。备餐完成后，请前往前台支付现金。'
       });
     } else if (method === 'card' || method === 'visa') {
-      // 银行卡/Visa支付，模拟验证
-      if (!cardInfo || !cardInfo.cardNumber || !cardInfo.expiryDate || !cardInfo.cvv) {
-        return res.status(400).json({ error: '银行卡信息不完整' });
+      // 银行卡/Visa支付：Stripe支付已在StripePaymentForm中完成
+      // 这里只需要验证transactionId（Stripe Payment Intent ID）是否存在
+      if (!cardInfo || !cardInfo.transactionId) {
+        return res.status(400).json({ error: '支付交易ID缺失，支付可能未完成' });
       }
       
-      // 简单的卡号验证（模拟）
-      const cardNumber = cardInfo.cardNumber.replace(/\s/g, '');
-      if (cardNumber.length < 13 || cardNumber.length > 19) {
-        return res.status(400).json({ error: '银行卡号格式不正确' });
-      }
-      
-      // 模拟支付处理延迟
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // 模拟支付成功（实际应该调用支付网关）
+      // Stripe支付已经成功，直接标记为完成
+      // transactionId 是 Stripe Payment Intent ID（例如：pi_xxx）
       paymentResult = {
         success: true,
-        transactionId: `${method.toUpperCase()}-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        transactionId: cardInfo.transactionId,
         message: `${method === 'visa' ? 'Visa' : '银行卡'}支付成功`
       };
     }
     
-    if (paymentResult.success) {
+    if (paymentResult && paymentResult.success) {
       payment.status = 'completed';
       payment.transactionId = paymentResult.transactionId;
       payment.paidAt = new Date().toISOString();
+      
+      // 保存Stripe交易信息到cardInfo
+      if (cardInfo) {
+        payment.cardInfo = {
+          transactionId: cardInfo.transactionId,
+        };
+      }
       
       // 保存支付记录
       const savedPayment = await addPayment(payment);
@@ -107,16 +107,17 @@ paymentRouter.post('/process', async (req: Request, res: Response) => {
         orders[orderIndex].paymentMethod = method;
         orders[orderIndex].paymentStatus = 'completed';
         orders[orderIndex].paymentId = savedPayment.id;
+        // 银行卡/Visa支付成功后，订单状态自动更新为preparing
+        if (method === 'card' || method === 'visa') {
+          orders[orderIndex].status = 'preparing';
+        }
         await saveOrders(orders);
       }
       
-      // 更新订单状态
-      await updateOrderStatus(order.id, 'preparing');
-      
-      // 模拟5秒后订单准备好
-      setTimeout(async () => {
-        await updateOrderStatus(order.id, 'ready');
-      }, 5000);
+      // 更新订单状态（银行卡/Visa支付后自动开始制作）
+      if (method === 'card' || method === 'visa') {
+        await updateOrderStatus(order.id, 'preparing');
+      }
       
       res.json({
         success: true,

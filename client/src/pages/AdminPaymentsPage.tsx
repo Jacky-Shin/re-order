@@ -100,12 +100,12 @@ export default function AdminPaymentsPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">交易号</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.transactionId')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">订单号</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">支付方式</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">支付时间</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.paidAt')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">

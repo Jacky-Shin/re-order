@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -68,8 +69,8 @@ export default function AdminDashboard() {
       color: 'bg-blue-50 hover:bg-blue-100 border-blue-200',
     },
     {
-      title: '分类管理',
-      description: '管理商品分类和排序',
+      title: t('admin.dashboard.categoryManagement'),
+      description: t('admin.dashboard.categoryManagementDesc'),
       icon: '📂',
       link: '/admin/categories',
       color: 'bg-teal-50 hover:bg-teal-100 border-teal-200',
@@ -116,38 +117,26 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-sb-green text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30">
+      {/* Header - 高级设计 */}
+      <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">{t('admin.dashboard.title')}</h1>
-              <p className="text-sm opacity-90 mt-1">{t('menu.title')}</p>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
+                <span className="text-3xl">📊</span>
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{t('admin.dashboard.title')}</h1>
+                <p className="text-sm opacity-90 mt-1 font-medium">{t('menu.title')}</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Language Switcher */}
-              <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-lg px-3 py-2">
-                <button
-                  onClick={() => setLanguage('zh')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'zh' ? 'bg-white text-sb-green' : 'text-white hover:bg-white hover:bg-opacity-20'
-                  }`}
-                >
-                  中文
-                </button>
-                <button
-                  onClick={() => setLanguage('es')}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    language === 'es' ? 'bg-white text-sb-green' : 'text-white hover:bg-white hover:bg-opacity-20'
-                  }`}
-                >
-                  ES
-                </button>
-              </div>
+              <LanguageSwitcher />
               <button
                 onClick={() => navigate('/menu')}
-                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors"
+                className="px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl transition-all duration-300 border border-white/20 font-medium"
               >
                 {t('common.back')}
               </button>
@@ -156,93 +145,120 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Stats Cards - 高级卡片设计 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {statCards.map((card, index) => (
             <div
               key={index}
               onClick={() => navigate(card.link)}
-              className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+              className="card card-hover cursor-pointer group relative overflow-hidden"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">{card.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{card.value}</p>
-                  {card.subtitle && (
-                    <p className="text-xs text-gray-400 mt-1">{card.subtitle}</p>
-                  )}
+              <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-14 h-14 rounded-2xl ${card.color} flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                    {card.icon}
+                  </div>
+                  <svg className="w-6 h-6 text-gray-300 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </div>
-                <div className={`${card.color} w-12 h-12 rounded-full flex items-center justify-center text-2xl`}>
-                  {card.icon}
-                </div>
+                <p className="text-gray-500 text-sm font-medium mb-2">{card.title}</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1">{card.value}</p>
+                {card.subtitle && (
+                  <p className="text-xs text-gray-400 font-medium">{card.subtitle}</p>
+                )}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">{t('admin.dashboard.quickLinks')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Quick Actions - 现代化按钮网格 */}
+        <div className="card p-8 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-blue-500 rounded-full"></div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.quickLinks')}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
               <button
                 key={index}
                 onClick={() => navigate(action.link)}
-                className={`${action.color} border-2 rounded-lg p-4 text-left transition-colors`}
+                className={`group relative overflow-hidden rounded-xl p-6 text-left border-2 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${action.color}`}
               >
-                <div className="text-3xl mb-2">{action.icon}</div>
-                <h3 className="font-semibold text-gray-900 mb-1">{action.title}</h3>
-                <p className="text-sm text-gray-600">{action.description}</p>
+                <div className="relative z-10">
+                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300">
+                    {action.icon}
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-1 text-lg">{action.title}</h3>
+                  <p className="text-sm text-gray-600 font-medium">{action.description}</p>
+                </div>
+                <div className="absolute top-0 right-0 w-20 h-20 bg-white/20 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500"></div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Order Statistics */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">{t('admin.stats.orders')}</h2>
+        {/* Order Statistics - 高级统计面板 */}
+        <div className="card p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full"></div>
+              <h2 className="text-2xl font-bold text-gray-900">{t('admin.stats.orders')}</h2>
+            </div>
             <button
               onClick={() => navigate('/admin/orders')}
-              className="text-sb-green hover:underline text-sm"
+              className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm flex items-center gap-2 hover:gap-3 transition-all"
             >
-              {t('common.all')}
+              {t('admin.dashboard.viewAll')}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-              <div className="text-sm text-gray-600 mb-1">{t('admin.dashboard.todayOrders')}</div>
-              <div className="text-2xl font-bold text-blue-600">{stats?.todayOrders || 0}</div>
-              <div className="text-xs text-gray-500 mt-1">{t('order.pickupNumber')}: {stats?.todayPickupCount || 0}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 p-6 border-2 border-blue-200">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-200/30 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative">
+                <div className="text-sm text-blue-700 font-semibold mb-2">{t('admin.dashboard.todayOrders')}</div>
+                <div className="text-4xl font-bold text-blue-600 mb-1">{stats?.todayOrders || 0}</div>
+                <div className="text-xs text-blue-600/70 font-medium">{t('order.pickupNumber')}: {stats?.todayPickupCount || 0}</div>
+              </div>
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
-              <div className="text-sm text-gray-600 mb-1">{t('admin.dashboard.monthOrders')}</div>
-              <div className="text-2xl font-bold text-purple-600">{stats?.monthOrders || 0}</div>
-              <div className="text-xs text-gray-500 mt-1">{t('admin.dashboard.totalOrders')}: {stats?.totalOrders || 0}</div>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100 p-6 border-2 border-purple-200">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/30 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative">
+                <div className="text-sm text-purple-700 font-semibold mb-2">{t('admin.dashboard.monthOrders')}</div>
+                <div className="text-4xl font-bold text-purple-600 mb-1">{stats?.monthOrders || 0}</div>
+                <div className="text-xs text-purple-600/70 font-medium">{t('admin.dashboard.totalOrders')}: {stats?.totalOrders || 0}</div>
+              </div>
             </div>
-            <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-              <div className="text-sm text-gray-600 mb-1">{t('admin.dashboard.monthRevenue')}</div>
-              <div className="text-2xl font-bold text-green-600">¥{(stats?.monthRevenue || 0).toFixed(2)}</div>
-              <div className="text-xs text-gray-500 mt-1">{t('admin.dashboard.totalRevenue')}: ¥{(stats?.totalRevenue || 0).toFixed(2)}</div>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 p-6 border-2 border-green-200">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-200/30 rounded-full -mr-16 -mt-16"></div>
+              <div className="relative">
+                <div className="text-sm text-green-700 font-semibold mb-2">{t('admin.dashboard.monthRevenue')}</div>
+                <div className="text-4xl font-bold text-green-600 mb-1">¥{(stats?.monthRevenue || 0).toFixed(2)}</div>
+                <div className="text-xs text-green-600/70 font-medium">{t('admin.dashboard.totalRevenue')}: ¥{(stats?.totalRevenue || 0).toFixed(2)}</div>
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{stats?.pendingOrders || 0}</div>
-              <div className="text-sm text-gray-600 mt-1">{t('admin.orders.status.pending')}</div>
+            <div className="text-center p-5 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200">
+              <div className="text-3xl font-bold text-blue-600 mb-2">{stats?.pendingOrders || 0}</div>
+              <div className="text-sm text-blue-700 font-semibold">{t('admin.orders.status.pending')}</div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-2xl font-bold text-yellow-600">{stats?.preparingOrders || 0}</div>
-              <div className="text-sm text-gray-600 mt-1">{t('admin.orders.status.preparing')}</div>
+            <div className="text-center p-5 rounded-xl bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-200">
+              <div className="text-3xl font-bold text-yellow-600 mb-2">{stats?.preparingOrders || 0}</div>
+              <div className="text-sm text-yellow-700 font-semibold">{t('admin.orders.status.preparing')}</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats?.readyOrders || 0}</div>
-              <div className="text-sm text-gray-600 mt-1">{t('admin.orders.status.ready')}</div>
+            <div className="text-center p-5 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200">
+              <div className="text-3xl font-bold text-green-600 mb-2">{stats?.readyOrders || 0}</div>
+              <div className="text-sm text-green-700 font-semibold">{t('admin.orders.status.ready')}</div>
             </div>
-            <div className="text-center p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-600">{stats?.totalOrders || 0}</div>
-              <div className="text-sm text-gray-600 mt-1">{t('admin.dashboard.totalOrders')}</div>
+            <div className="text-center p-5 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200">
+              <div className="text-3xl font-bold text-gray-600 mb-2">{stats?.totalOrders || 0}</div>
+              <div className="text-sm text-gray-700 font-semibold">{t('admin.dashboard.totalOrders')}</div>
             </div>
           </div>
         </div>

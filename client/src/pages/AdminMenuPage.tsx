@@ -352,7 +352,7 @@ export default function AdminMenuPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分类 <span className="text-red-500">*</span>
+                    {t('admin.menu.categoryRequired')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     required
@@ -360,7 +360,7 @@ export default function AdminMenuPage() {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
                   >
-                    <option value="">请选择分类</option>
+                    <option value="">{t('admin.menu.selectCategory')}</option>
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>
                         {cat.name}
@@ -369,7 +369,7 @@ export default function AdminMenuPage() {
                   </select>
                   {categories.length === 0 && (
                     <p className="text-xs text-gray-500 mt-1">
-                      暂无分类，请先<a href="/admin/categories" className="text-sb-green hover:underline">创建分类</a>
+                      {t('admin.menu.noCategories')} <a href="/admin/categories" className="text-sb-green hover:underline">{t('admin.menu.createCategory')}</a>
                     </p>
                   )}
                 </div>

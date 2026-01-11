@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export default function AdminCategoriesPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -81,7 +82,7 @@ export default function AdminCategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个分类吗？删除后该分类下的商品将无法显示。')) return;
+    if (!confirm(t('categories.confirmDelete'))) return;
     try {
       await adminApi.deleteCategory(id);
       await loadCategories();
@@ -153,14 +154,14 @@ export default function AdminCategoriesPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-4 text-lg font-semibold">分类管理</h1>
+            <h1 className="ml-4 text-lg font-semibold">{t('categories.title')}</h1>
           </div>
           {!showAddForm && (
             <button
               onClick={() => setShowAddForm(true)}
               className="px-4 py-2 bg-sb-green text-white rounded-lg font-semibold hover:bg-opacity-90"
             >
-              添加分类
+              {t('categories.add')}
             </button>
           )}
         </div>
@@ -170,13 +171,13 @@ export default function AdminCategoriesPage() {
         {showAddForm ? (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">
-              {editingCategory ? '编辑分类' : '添加分类'}
+              {editingCategory ? t('categories.edit') : t('categories.add')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    分类名称 <span className="text-red-500">*</span>
+                    {t('categories.nameRequired')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -229,13 +230,13 @@ export default function AdminCategoriesPage() {
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold">分类列表</h3>
-              <p className="text-sm text-gray-500 mt-1">拖拽分类可调整显示顺序</p>
+              <h3 className="text-lg font-semibold">{t('categories.list')}</h3>
+              <p className="text-sm text-gray-500 mt-1">{t('categories.dragHint')}</p>
             </div>
             <div className="divide-y divide-gray-200">
               {categories.length === 0 ? (
                 <div className="px-6 py-12 text-center text-gray-500">
-                  暂无分类，请添加分类
+                  {t('categories.empty')}
                 </div>
               ) : (
                 categories.map((category, index) => (

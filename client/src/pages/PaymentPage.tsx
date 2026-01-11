@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { paymentApi, orderApi } from '../api/client';
-import { PaymentMethod } from '../types';
+import { PaymentMethod, Order } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import StripePaymentForm from '../components/StripePaymentForm';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -11,13 +12,14 @@ export default function PaymentPage() {
   const { t } = useLanguage();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [processing, setProcessing] = useState(false);
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (orderId) {
       loadOrder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
   const loadOrder = async () => {
@@ -55,9 +57,10 @@ export default function PaymentPage() {
         } else {
           alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
         }
-      } catch (error: any) {
+      } catch (error) {
         console.error('支付失败:', error);
-        alert(t('payment.paymentFailed') + ': ' + (error.response?.data?.error || t('payment.paymentFailedNetwork')));
+        const errorMessage = error instanceof Error ? error.message : t('payment.paymentFailedNetwork');
+        alert(t('payment.paymentFailed') + ': ' + errorMessage);
       } finally {
         setProcessing(false);
       }
@@ -82,11 +85,33 @@ export default function PaymentPage() {
       });
 
       if (response.data.success) {
+        // 如果使用Firebase，确保数据同步到Firebase
+        const { firebaseService } = await import('../services/firebaseService');
+        if (firebaseService.isAvailable()) {
+          try {
+            // 保存支付记录到Firebase
+            await firebaseService.addPayment(response.data.payment);
+            
+            // 更新订单状态到Firebase
+            await firebaseService.updateOrder(orderId, {
+              paymentMethod: paymentMethod,
+              paymentStatus: 'completed',
+              paymentId: response.data.payment.id,
+              status: 'preparing',
+            });
+            
+            console.log('✅ 支付数据已同步到Firebase');
+          } catch (firebaseError) {
+            console.error('⚠️ Firebase同步失败，但支付已成功:', firebaseError);
+            // Firebase同步失败不影响支付成功，继续执行
+          }
+        }
+        
         navigate(`/order-status/${order.id}`);
       } else {
         alert(t('payment.paymentFailed') + ': ' + (response.data.message || t('payment.paymentFailedUnknown')));
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('更新支付记录失败:', error);
       // 即使更新失败，支付已经成功，仍然跳转
       navigate(`/order-status/${order.id}`);
@@ -112,12 +137,12 @@ export default function PaymentPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">订单未找到</p>
+          <p className="text-gray-500 mb-4">{t('payment.orderNotFound')}</p>
           <button
             onClick={() => navigate('/menu')}
             className="text-sb-green hover:underline"
           >
-            返回菜单
+            {t('payment.backToMenu')}
           </button>
         </div>
       </div>
@@ -125,25 +150,28 @@ export default function PaymentPage() {
   }
 
   const paymentMethods = [
-    { value: 'cash' as PaymentMethod, label: '现金支付', icon: '💵', description: '到店后现金支付' },
-    { value: 'card' as PaymentMethod, label: '银行卡', icon: '💳', description: '使用银行卡支付' },
-    { value: 'visa' as PaymentMethod, label: 'Visa', icon: '💳', description: '使用Visa卡支付' },
+    { value: 'cash' as PaymentMethod, label: t('payment.cashPayment'), icon: '💵', description: t('payment.cashDescription') },
+    { value: 'card' as PaymentMethod, label: t('payment.card'), icon: '💳', description: t('payment.cardDescription') },
+    { value: 'visa' as PaymentMethod, label: t('payment.visa'), icon: '💳', description: t('payment.visaDescription') },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
       <div className="bg-white sticky top-0 z-10 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="ml-4 text-lg font-semibold">选择支付方式</h1>
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="ml-4 text-lg font-semibold">{t('payment.selectMethod')}</h1>
+          </div>
+          <LanguageSwitcher variant="light" />
         </div>
       </div>
 
@@ -151,27 +179,27 @@ export default function PaymentPage() {
         {/* Order Summary */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">订单信息</h2>
+            <h2 className="text-lg font-semibold">{t('payment.orderInfo')}</h2>
             {order.tableNumber && (
               <div className="px-3 py-1 bg-sb-light-green rounded-lg">
-                <span className="text-sm text-gray-600 mr-1">桌位</span>
+                <span className="text-sm text-gray-600 mr-1">{t('order.tableNumber')}</span>
                 <span className="font-bold text-sb-green">{order.tableNumber}</span>
               </div>
             )}
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">订单号</span>
+              <span className="text-gray-600">{t('order.orderNumber')}</span>
               <span className="font-medium">{order.orderNumber}</span>
             </div>
             {order.pickupNumber && (
               <div className="flex justify-between">
-                <span className="text-gray-600">取单号</span>
+                <span className="text-gray-600">{t('order.pickupNumber')}</span>
                 <span className="font-semibold text-sb-green">{order.pickupNumber}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-gray-600">订单金额</span>
+              <span className="text-gray-600">{t('payment.amount')}</span>
               <span className="font-bold text-sb-green text-lg">¥{order.totalAmount.toFixed(2)}</span>
             </div>
           </div>
@@ -179,7 +207,7 @@ export default function PaymentPage() {
 
         {/* Payment Methods */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">选择支付方式</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('payment.selectMethod')}</h2>
           <div className="space-y-3">
             {paymentMethods.map((method) => (
               <button
@@ -216,7 +244,7 @@ export default function PaymentPage() {
         {(paymentMethod === 'card' || paymentMethod === 'visa') && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-lg font-semibold mb-4">
-              {paymentMethod === 'visa' ? 'Visa支付' : '银行卡支付'}
+              {paymentMethod === 'visa' ? t('payment.visaPayment') : t('payment.cardPayment')}
             </h2>
             <StripePaymentForm
               amount={order.totalAmount}
@@ -235,12 +263,12 @@ export default function PaymentPage() {
             <div className="flex items-start gap-3">
               <span className="text-2xl">💵</span>
               <div>
-                <h3 className="font-semibold text-yellow-900 mb-1">现金支付</h3>
+                <h3 className="font-semibold text-yellow-900 mb-1">{t('payment.cashNoticeTitle')}</h3>
                 <p className="text-sm text-yellow-800 mb-2">
-                  选择现金支付后，订单将提交给商家。商家备餐完成后会通知您，届时请前往前台支付现金。
+                  {t('payment.cashNoticeMessage')}
                 </p>
                 <p className="text-sm font-semibold text-yellow-900">
-                  订单金额：<strong>¥{order.totalAmount.toFixed(2)}</strong>
+                  {t('payment.amount')}：<strong>¥{order.totalAmount.toFixed(2)}</strong>
                 </p>
               </div>
             </div>

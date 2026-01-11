@@ -23,19 +23,18 @@ const translations = {
 
 // 根据浏览器语言自动检测
 function detectLanguage(isAdmin: boolean): Language {
+  // 优先从localStorage读取用户选择的语言
+  const saved = localStorage.getItem(isAdmin ? 'adminLanguage' : 'userLanguage');
+  if (saved === 'es' || saved === 'en' || saved === 'zh') {
+    return saved as Language;
+  }
+  
   if (isAdmin) {
-    // 商家后台：从localStorage读取，默认中文
-    const saved = localStorage.getItem('adminLanguage');
-    if (saved === 'es' || saved === 'zh') {
-      return saved as Language;
-    }
-    return 'zh'; // 默认中文
+    // 商家后台：如果没有保存的语言，默认中文
+    return 'zh';
   } else {
-    // 用户端：始终根据浏览器语言自动检测（不使用localStorage）
-    // 优先检测浏览器语言
+    // 用户端：根据浏览器语言自动检测
     const browserLang = navigator.language || (navigator as any).userLanguage || '';
-    
-    // 检查完整语言代码（如 en-US, es-ES, zh-CN）
     const langLower = browserLang.toLowerCase();
     if (langLower.startsWith('es')) {
       return 'es'; // 西班牙语
@@ -44,8 +43,7 @@ function detectLanguage(isAdmin: boolean): Language {
     } else if (langLower.startsWith('zh')) {
       return 'zh'; // 中文
     }
-    
-    // 如果浏览器语言不匹配，默认使用英语（更通用的国际化选择）
+    // 默认使用英语
     return 'en';
   }
 }
@@ -62,27 +60,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    if (isAdmin) {
-      // 商家后台：保存语言选择
-      localStorage.setItem('adminLanguage', lang);
-    }
-    // 用户端：不保存语言选择，始终使用浏览器语言自动检测
+    // 保存语言选择到localStorage
+    localStorage.setItem(isAdmin ? 'adminLanguage' : 'userLanguage', lang);
   };
 
   // 翻译函数：支持嵌套路径，如 'menu.title' 或 'admin.dashboard.title'
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = translations[language];
+    let value: unknown = translations[language];
     
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+      if (value && typeof value === 'object' && value !== null && k in value) {
+        value = (value as Record<string, unknown>)[k];
       } else {
         // 如果找不到翻译，尝试从中文获取
-        let fallback: any = translations.zh;
+        let fallback: unknown = translations.zh;
         for (const k2 of keys) {
-          if (fallback && typeof fallback === 'object' && k2 in fallback) {
-            fallback = fallback[k2];
+          if (fallback && typeof fallback === 'object' && fallback !== null && k2 in fallback) {
+            fallback = (fallback as Record<string, unknown>)[k2];
           } else {
             return key; // 如果都找不到，返回key本身
           }
