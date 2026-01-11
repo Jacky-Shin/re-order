@@ -92,40 +92,38 @@ export default function AdminShopPage() {
       return;
     }
 
-    // 验证文件大小（5MB）
-    if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过5MB');
+    // 验证文件大小（2MB，base64会增加约33%的大小）
+    if (file.size > 2 * 1024 * 1024) {
+      alert('图片大小不能超过2MB');
       return;
     }
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const uploadResponse = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
+      
+      // 将图片转换为 base64
+      const base64Image = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
-
-      if (!uploadResponse.ok) {
-        throw new Error('上传失败');
-      }
-
-      const { url } = await uploadResponse.json();
       
       // 添加到banner图片列表
       const currentBanners = shopSettings?.bannerImages || [];
-      const updatedBanners = [...currentBanners, url];
+      const updatedBanners = [...currentBanners, base64Image];
       
       await adminApi.updateShopSettings({
         bannerImages: updatedBanners,
       });
       
       await loadShopSettings();
-    } catch (error) {
+    } catch (error: any) {
       console.error('上传图片失败:', error);
-      alert('上传图片失败，请重试');
+      alert('上传图片失败: ' + (error.message || '请重试'));
     } finally {
       setUploading(false);
     }
