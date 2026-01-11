@@ -53,14 +53,28 @@ class FirebaseService {
       if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'your-api-key') {
         console.warn('⚠️ Firebase未配置，将使用本地存储（数据不会跨设备同步）');
         console.warn('请在Vercel中设置环境变量：VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID等');
+        console.warn('环境变量检查:', {
+          apiKey: firebaseConfig.apiKey ? '已设置' : '未设置',
+          projectId: firebaseConfig.projectId ? '已设置' : '未设置',
+          authDomain: firebaseConfig.authDomain ? '已设置' : '未设置',
+          storageBucket: firebaseConfig.storageBucket ? '已设置' : '未设置',
+          messagingSenderId: firebaseConfig.messagingSenderId ? '已设置' : '未设置',
+          appId: firebaseConfig.appId ? '已设置' : '未设置'
+        });
         this.isInitialized = true;
         return;
       }
 
+      console.log('🔧 正在初始化Firebase应用...');
       this.app = initializeApp(firebaseConfig);
+      console.log('🔧 正在初始化Firestore数据库...');
       this.db = getFirestore(this.app);
       this.isInitialized = true;
       console.log('✅ Firebase初始化成功，跨设备同步已启用');
+      console.log('✅ Firebase配置:', {
+        projectId: firebaseConfig.projectId,
+        apiKey: firebaseConfig.apiKey.substring(0, 10) + '...'
+      });
     } catch (error) {
       console.error('❌ Firebase初始化失败:', error);
       console.error('将回退到本地存储（数据不会跨设备同步）');
@@ -268,28 +282,67 @@ class FirebaseService {
   }
 
   async addOrder(order: Order): Promise<Order> {
-    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    if (!this.isAvailable()) {
+      console.error('❌ Firebase不可用，无法添加订单');
+      throw new Error('Firebase未配置');
+    }
     
     try {
-      await setDoc(doc(this.db!, 'orders', order.id), {
+      console.log('📤 正在添加订单到Firebase...', {
+        id: order.id,
         orderNumber: order.orderNumber,
-        pickupNumber: order.pickupNumber,
-        pickupDate: order.pickupDate,
+        totalAmount: order.totalAmount
+      });
+      
+      // Firebase Firestore不支持undefined值，需要转换为null或过滤掉
+      const orderData: any = {
+        orderNumber: order.orderNumber,
         items: order.items,
         totalAmount: order.totalAmount,
         status: order.status,
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-        paymentId: order.paymentId,
-        tableNumber: order.tableNumber,
-        customerName: order.customerName,
-        phone: order.phone,
-        notifiedAt: order.notifiedAt,
         createdAt: Timestamp.now()
-      });
+      };
+      
+      // 只添加非undefined的字段
+      if (order.pickupNumber !== undefined && order.pickupNumber !== null) {
+        orderData.pickupNumber = order.pickupNumber;
+      }
+      if (order.pickupDate !== undefined && order.pickupDate !== null) {
+        orderData.pickupDate = order.pickupDate;
+      }
+      if (order.paymentMethod !== undefined && order.paymentMethod !== null) {
+        orderData.paymentMethod = order.paymentMethod;
+      }
+      if (order.paymentStatus !== undefined && order.paymentStatus !== null) {
+        orderData.paymentStatus = order.paymentStatus;
+      }
+      if (order.paymentId !== undefined && order.paymentId !== null) {
+        orderData.paymentId = order.paymentId;
+      }
+      if (order.tableNumber !== undefined && order.tableNumber !== null) {
+        orderData.tableNumber = order.tableNumber;
+      }
+      if (order.customerName !== undefined && order.customerName !== null) {
+        orderData.customerName = order.customerName;
+      }
+      if (order.phone !== undefined && order.phone !== null) {
+        orderData.phone = order.phone;
+      }
+      if (order.notifiedAt !== undefined && order.notifiedAt !== null) {
+        orderData.notifiedAt = Timestamp.fromDate(new Date(order.notifiedAt));
+      }
+      
+      await setDoc(doc(this.db!, 'orders', order.id), orderData);
+      
+      console.log('✅ 订单已成功添加到Firebase:', order.id);
       return order;
     } catch (error) {
-      console.error('添加订单失败:', error);
+      console.error('❌ 添加订单到Firebase失败:', error);
+      console.error('错误详情:', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw error;
     }
   }
@@ -303,9 +356,15 @@ class FirebaseService {
       
       // 只添加非undefined的字段，Firebase不支持undefined
       if (updates.status !== undefined) updateData.status = updates.status;
-      if (updates.paymentMethod !== undefined) updateData.paymentMethod = updates.paymentMethod;
-      if (updates.paymentStatus !== undefined) updateData.paymentStatus = updates.paymentStatus;
-      if (updates.paymentId !== undefined) updateData.paymentId = updates.paymentId;
+      if (updates.paymentMethod !== undefined) {
+        updateData.paymentMethod = updates.paymentMethod === null ? null : updates.paymentMethod;
+      }
+      if (updates.paymentStatus !== undefined) {
+        updateData.paymentStatus = updates.paymentStatus === null ? null : updates.paymentStatus;
+      }
+      if (updates.paymentId !== undefined) {
+        updateData.paymentId = updates.paymentId === null ? null : updates.paymentId;
+      }
       if (updates.notifiedAt !== undefined) {
         // 如果notifiedAt是null，需要明确设置为null（Firebase支持null）
         if (updates.notifiedAt === null) {
@@ -345,14 +404,20 @@ class FirebaseService {
     if (!this.isAvailable()) throw new Error('Firebase未配置');
     
     try {
-      await setDoc(doc(this.db!, 'payments', payment.id), {
+      const paymentData: any = {
         orderId: payment.orderId,
         amount: payment.amount,
         method: payment.method,
         status: payment.status,
-        cardInfo: payment.cardInfo,
         createdAt: Timestamp.now()
-      });
+      };
+      
+      // 只添加非undefined的字段
+      if (payment.cardInfo !== undefined && payment.cardInfo !== null) {
+        paymentData.cardInfo = payment.cardInfo;
+      }
+      
+      await setDoc(doc(this.db!, 'payments', payment.id), paymentData);
       return payment;
     } catch (error) {
       console.error('添加支付记录失败:', error);
@@ -381,19 +446,68 @@ class FirebaseService {
     if (!this.isAvailable()) throw new Error('Firebase未配置');
     
     try {
-      await setDoc(doc(this.db!, 'merchant_accounts', account.id), {
+      const accountData: any = {
         bankName: account.bankName,
         accountName: account.accountName,
         accountNumber: account.accountNumber,
-        cardNumber: account.cardNumber,
-        expiryDate: account.expiryDate,
-        cvv: account.cvv,
-        isDefault: account.isDefault,
+        isDefault: account.isDefault !== undefined ? account.isDefault : false,
         createdAt: Timestamp.now()
-      });
+      };
+      
+      // 只添加非undefined的字段
+      if (account.cardNumber !== undefined && account.cardNumber !== null) {
+        accountData.cardNumber = account.cardNumber;
+      }
+      if (account.expiryDate !== undefined && account.expiryDate !== null) {
+        accountData.expiryDate = account.expiryDate;
+      }
+      if (account.cvv !== undefined && account.cvv !== null) {
+        accountData.cvv = account.cvv;
+      }
+      
+      await setDoc(doc(this.db!, 'merchant_accounts', account.id), accountData);
       return account;
     } catch (error) {
       console.error('添加商家账户失败:', error);
+      throw error;
+    }
+  }
+
+  async updateMerchantAccount(id: string, account: Partial<MerchantBankAccount>): Promise<MerchantBankAccount> {
+    if (!this.isAvailable()) throw new Error('Firebase未配置');
+    
+    try {
+      const docRef = doc(this.db!, 'merchant_accounts', id);
+      const updateData: any = {};
+      
+      if (account.bankName !== undefined) updateData.bankName = account.bankName;
+      if (account.accountName !== undefined) updateData.accountName = account.accountName;
+      if (account.accountNumber !== undefined) updateData.accountNumber = account.accountNumber;
+      if (account.isDefault !== undefined) updateData.isDefault = account.isDefault;
+      
+      // 只添加非undefined的字段
+      if (account.cardNumber !== undefined) {
+        updateData.cardNumber = account.cardNumber === null ? null : account.cardNumber;
+      }
+      if (account.expiryDate !== undefined) {
+        updateData.expiryDate = account.expiryDate === null ? null : account.expiryDate;
+      }
+      if (account.cvv !== undefined) {
+        updateData.cvv = account.cvv === null ? null : account.cvv;
+      }
+      
+      await setDoc(docRef, updateData, { merge: true });
+      
+      const updatedDoc = await getDoc(docRef);
+      if (updatedDoc.exists()) {
+        return {
+          id: updatedDoc.id,
+          ...updatedDoc.data()
+        } as MerchantBankAccount;
+      }
+      throw new Error('更新失败');
+    } catch (error) {
+      console.error('更新商家账户失败:', error);
       throw error;
     }
   }
@@ -416,7 +530,7 @@ class FirebaseService {
       tableNumber: data.tableNumber,
       customerName: data.customerName,
       phone: data.phone,
-      notifiedAt: data.notifiedAt,
+      notifiedAt: data.notifiedAt?.toDate?.()?.toISOString(),
       createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString()
     };
   }
