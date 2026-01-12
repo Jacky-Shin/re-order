@@ -53,19 +53,29 @@ export default function PaymentPage() {
         });
 
         if (response.data.success) {
-          // 付款成功后自动打印小票
+          // 付款成功后自动打印小票（使用超时和错误处理）
           if (order) {
-            try {
-              await printerApi.printOrder(order.id);
-              console.log('✅ 订单打印成功');
-            } catch (printError: any) {
-              console.error('打印小票失败:', printError);
-              // 打印失败不影响流程，继续执行
-              // 可以显示提示，但不阻止跳转
-              if (printError?.response?.data?.error) {
-                console.warn('打印错误:', printError.response.data.error);
+            // 打印操作不阻塞页面跳转，使用异步处理
+            (async () => {
+              try {
+                // 添加超时处理，避免打印操作卡死
+                const { withTimeout } = await import('../utils/errorHandler');
+                await withTimeout(
+                  printerApi.printOrder(order.id),
+                  5000,
+                  '打印超时'
+                );
+                console.log('✅ 订单打印成功');
+              } catch (printError: any) {
+                console.error('打印小票失败:', printError);
+                // 打印失败不影响流程，静默处理
+                if (printError?.response?.data?.error) {
+                  console.warn('打印错误:', printError.response.data.error);
+                }
               }
-            }
+            })();
+            
+            // 立即跳转，不等待打印完成
             navigate(`/order-status/${order.id}`);
           }
         } else {
@@ -121,18 +131,29 @@ export default function PaymentPage() {
           }
         }
         
-        // 付款成功后自动打印小票
+        // 付款成功后自动打印小票（使用超时和错误处理）
         if (order) {
-          try {
-            await printerApi.printOrder(order.id);
-            console.log('✅ 订单打印成功');
-          } catch (printError: any) {
-            console.error('打印小票失败:', printError);
-            // 打印失败不影响流程，继续执行
-            if (printError?.response?.data?.error) {
-              console.warn('打印错误:', printError.response.data.error);
+          // 打印操作不阻塞页面跳转，使用异步处理
+          (async () => {
+            try {
+              // 添加超时处理，避免打印操作卡死
+              const { withTimeout } = await import('../utils/errorHandler');
+              await withTimeout(
+                printerApi.printOrder(order.id),
+                5000,
+                '打印超时'
+              );
+              console.log('✅ 订单打印成功');
+            } catch (printError: any) {
+              console.error('打印小票失败:', printError);
+              // 打印失败不影响流程，静默处理
+              if (printError?.response?.data?.error) {
+                console.warn('打印错误:', printError.response.data.error);
+              }
             }
-          }
+          })();
+          
+          // 立即跳转，不等待打印完成
           navigate(`/order-status/${order.id}`);
         }
       } else {

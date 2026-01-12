@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { orderApi, paymentApi, adminApi } from '../api/client';
 import { Order, Payment } from '../types';
@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { withTimeout, safeAsync, debounce } from '../utils/errorHandler';
 
 export default function OrderStatusPage() {
   const { orderNumber, orderId } = useParams<{ orderNumber?: string; orderId?: string }>();
@@ -16,6 +17,10 @@ export default function OrderStatusPage() {
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(true);
   const [queueInfo, setQueueInfo] = useState<{ currentOrderNumber: string | null; aheadCount: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef<number>(0);
+  const MAX_RETRIES = 5;
 
   useEffect(() => {
     if (orderId) {
@@ -72,58 +77,117 @@ export default function OrderStatusPage() {
     };
   }, [order, orderId, orderNumber]);
 
-  // 轮询作为后备方案（如果实时监听不可用）
+  // 轮询作为后备方案（如果实时监听不可用）- 优化：增加间隔，添加错误处理
   useEffect(() => {
     if (!polling || !order) return;
 
-    const interval = setInterval(() => {
-      if (orderId) {
-        loadOrderById(orderId);
-      } else if (orderNumber) {
-        loadOrderByNumber(orderNumber);
-      }
-    }, 3000);
+    // 清理之前的轮询
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
 
-    return () => clearInterval(interval);
+    // 使用防抖的加载函数，避免频繁请求
+    const debouncedLoad = debounce(async () => {
+      try {
+        if (orderId) {
+          await loadOrderById(orderId);
+          retryCountRef.current = 0; // 成功后重置重试计数
+        } else if (orderNumber) {
+          await loadOrderByNumber(orderNumber);
+          retryCountRef.current = 0;
+        }
+      } catch (error) {
+        retryCountRef.current += 1;
+        if (retryCountRef.current >= MAX_RETRIES) {
+          console.error('轮询失败次数过多，停止轮询');
+          setPolling(false);
+          setError('无法获取订单更新，请刷新页面');
+        }
+      }
+    }, 500);
+
+    // 初始延迟后开始轮询，然后每5秒轮询一次（减少频率）
+    pollingRef.current = setInterval(() => {
+      debouncedLoad();
+    }, 5000);
+
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
   }, [polling, orderId, orderNumber, order]);
 
   const loadOrderById = async (id: string) => {
     try {
-      const response = await orderApi.getById(id);
+      setError(null);
+      // 添加超时处理，避免长时间等待
+      const response = await withTimeout(
+        orderApi.getById(id),
+        10000,
+        '加载订单超时，请检查网络连接'
+      );
+      
       setOrder(response.data);
       setLoading(false);
       
-      // 加载支付信息
+      // 加载支付信息（使用安全异步，避免阻塞）
       if (response.data.paymentId) {
-        try {
-          const paymentResponse = await paymentApi.getById(response.data.paymentId);
+        await safeAsync(async () => {
+          const paymentResponse = await withTimeout(
+            paymentApi.getById(response.data.paymentId!),
+            5000,
+            '加载支付信息超时'
+          );
           setPayment(paymentResponse.data);
-        } catch (error) {
-          console.error('加载支付信息失败:', error);
-        }
+        }, (err) => {
+          console.warn('加载支付信息失败（非关键）:', err);
+        });
       }
       
-      // 加载排队信息
-      await loadQueueInfo(response.data);
+      // 加载排队信息（使用安全异步）
+      await safeAsync(async () => {
+        await loadQueueInfo(response.data);
+      }, (err) => {
+        console.warn('加载排队信息失败（非关键）:', err);
+      });
       
       // 如果订单已完成或已取消，停止轮询
       if (response.data.status === 'completed' || response.data.status === 'cancelled') {
         setPolling(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('加载订单失败:', error);
+      setError(error.message || '加载订单失败，请刷新页面重试');
       setLoading(false);
+      // 如果是超时错误，不停止轮询，继续尝试
+      if (!error.message?.includes('超时')) {
+        retryCountRef.current += 1;
+        if (retryCountRef.current >= MAX_RETRIES) {
+          setPolling(false);
+        }
+      }
     }
   };
 
   const loadQueueInfo = async (currentOrder: Order) => {
     try {
-      // 获取所有待处理和制作中的订单
-      const response = await adminApi.getAllOrders();
+      // 添加超时处理，避免长时间等待
+      const response = await withTimeout(
+        adminApi.getAllOrders(),
+        8000,
+        '加载排队信息超时'
+      );
+      
       const allOrders = response.data;
       
+      // 限制处理的数据量，避免性能问题
+      const maxOrders = 100;
+      const limitedOrders = allOrders.slice(0, maxOrders);
+      
       // 筛选出待处理和制作中的订单，按创建时间排序
-      const pendingOrders = allOrders
+      const pendingOrders = limitedOrders
         .filter(o => o.status === 'pending' || o.status === 'preparing')
         .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       
@@ -139,37 +203,61 @@ export default function OrderStatusPage() {
         currentOrderNumber,
         aheadCount,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('加载排队信息失败:', error);
+      // 排队信息加载失败不影响主流程，静默处理
     }
   };
 
   const loadOrderByNumber = async (num: string) => {
     try {
-      const response = await orderApi.getByNumber(num);
+      setError(null);
+      // 添加超时处理
+      const response = await withTimeout(
+        orderApi.getByNumber(num),
+        10000,
+        '加载订单超时，请检查网络连接'
+      );
+      
       setOrder(response.data);
       setLoading(false);
       
-      // 加载支付信息
+      // 加载支付信息（使用安全异步）
       if (response.data.paymentId) {
-        try {
-          const paymentResponse = await paymentApi.getById(response.data.paymentId);
+        await safeAsync(async () => {
+          const paymentResponse = await withTimeout(
+            paymentApi.getById(response.data.paymentId!),
+            5000,
+            '加载支付信息超时'
+          );
           setPayment(paymentResponse.data);
-        } catch (error) {
-          console.error('加载支付信息失败:', error);
-        }
+        }, (err) => {
+          console.warn('加载支付信息失败（非关键）:', err);
+        });
       }
       
-      // 加载排队信息
-      await loadQueueInfo(response.data);
+      // 加载排队信息（使用安全异步）
+      await safeAsync(async () => {
+        await loadQueueInfo(response.data);
+      }, (err) => {
+        console.warn('加载排队信息失败（非关键）:', err);
+      });
       
       // 如果订单已完成或已取消，停止轮询
       if (response.data.status === 'completed' || response.data.status === 'cancelled') {
         setPolling(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('加载订单失败:', error);
+      setError(error.message || '加载订单失败，请刷新页面重试');
       setLoading(false);
+      // 如果是超时错误，不停止轮询，继续尝试
+      if (!error.message?.includes('超时')) {
+        retryCountRef.current += 1;
+        if (retryCountRef.current >= MAX_RETRIES) {
+          setPolling(false);
+        }
+      }
     }
   };
 

@@ -46,12 +46,24 @@ export default function AdminOrdersPage() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const response = await adminApi.getAllOrders();
-      setOrders(response.data.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ));
-    } catch (error) {
+      // 添加超时处理，避免长时间等待
+      const { withTimeout } = await import('../utils/errorHandler');
+      const response = await withTimeout(
+        adminApi.getAllOrders(),
+        15000,
+        '加载订单超时，请检查网络连接'
+      );
+      
+      // 限制订单数量，避免渲染过多数据导致卡顿
+      const maxOrders = 200;
+      const sortedOrders = response.data
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, maxOrders);
+      
+      setOrders(sortedOrders);
+    } catch (error: any) {
       console.error('加载订单失败:', error);
+      alert(error.message || '加载订单失败，请刷新页面重试');
     } finally {
       setLoading(false);
     }
