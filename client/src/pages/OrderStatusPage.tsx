@@ -337,7 +337,7 @@ export default function OrderStatusPage() {
         </div>
 
         {/* 订单准备通知 */}
-          {order.status === 'ready' && order.notifiedAt && (
+        {order.status === 'ready' && order.notifiedAt && (
             <div className={`mb-4 mt-4 p-4 rounded-lg border-2 animate-pulse ${
               order.paymentMethod === 'cash' && order.paymentStatus === 'pending'
                 ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300'
