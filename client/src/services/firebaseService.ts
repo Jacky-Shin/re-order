@@ -805,6 +805,35 @@ class FirebaseService {
     
     return unsubscribe;
   }
+
+  /**
+   * 清理所有Firebase数据
+   */
+  async clearAllData(): Promise<void> {
+    if (!this.isAvailable()) {
+      console.warn('Firebase未配置，跳过Firebase数据清理');
+      return;
+    }
+
+    try {
+      const collections = ['menu_items', 'orders', 'categories', 'payments', 'merchant_accounts', 'shop_settings'];
+      
+      for (const collectionName of collections) {
+        const collectionRef = collection(this.db!, collectionName);
+        const snapshot = await getDocs(collectionRef);
+        
+        const deletePromises = snapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+        
+        console.log(`✅ 已清理Firebase集合: ${collectionName}`);
+      }
+      
+      console.log('✅ 所有Firebase数据已清理完成');
+    } catch (error) {
+      console.error('清理Firebase数据失败:', error);
+      throw error;
+    }
+  }
 }
 
 export const firebaseService = new FirebaseService();

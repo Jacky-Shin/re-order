@@ -1250,6 +1250,49 @@ class DatabaseService {
       createdAt: row.createdAt || new Date().toISOString(),
     };
   }
+
+  /**
+   * 清理所有数据（用于测试和重置）
+   */
+  async clearAllData(): Promise<void> {
+    await this.initialize();
+    
+    // 清理localStorage中的所有数据库数据
+    const keysToRemove = [
+      'db_menu_items',
+      'db_orders',
+      'db_categories',
+      'db_payments',
+      'db_merchant_accounts',
+      'db_last_pickup_date',
+      'db_last_order_number',
+      'db_last_pickup_number',
+      'db_shop_settings',
+    ];
+
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    // 触发存储更新事件
+    keysToRemove.forEach(key => {
+      window.dispatchEvent(new CustomEvent('database-update', { 
+        detail: { key } 
+      }));
+    });
+
+    // 如果Firebase可用，也清理Firebase数据
+    if (firebaseService.isAvailable()) {
+      try {
+        await firebaseService.clearAllData();
+      } catch (error) {
+        console.error('清理Firebase数据失败:', error);
+        // 即使Firebase清理失败，也继续（因为localStorage已清理）
+      }
+    }
+
+    console.log('✅ 所有数据已清理完成');
+  }
 }
 
 // 导出单例

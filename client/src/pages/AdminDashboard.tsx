@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../api/client';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { databaseService } from '../services/database';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -282,6 +283,43 @@ export default function AdminDashboard() {
               <div className="text-sm text-gray-700 font-semibold">{t('admin.dashboard.totalOrders')}</div>
             </div>
           </div>
+        </div>
+
+        {/* 数据管理区域 */}
+        <div className="card p-8 border-2 border-red-200 bg-red-50/50">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-1 h-8 bg-gradient-to-b from-red-500 to-red-600 rounded-full"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Gestión de Datos</h2>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            Esta acción eliminará todos los datos: productos, pedidos, categorías, pagos y configuraciones. Esta acción no se puede deshacer.
+          </p>
+          <button
+            onClick={async () => {
+              if (!confirm('¿Está seguro de que desea eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                return;
+              }
+              if (!confirm('Esta es su última oportunidad. ¿Realmente desea eliminar todos los datos?')) {
+                return;
+              }
+              try {
+                await databaseService.clearAllData();
+                alert('✅ Todos los datos han sido eliminados. La página se recargará.');
+                window.location.reload();
+              } catch (error: any) {
+                console.error('Error al limpiar datos:', error);
+                alert('Error al limpiar datos: ' + (error.message || 'Error desconocido'));
+              }
+            }}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Limpiar Todos los Datos
+          </button>
         </div>
       </div>
     </div>
