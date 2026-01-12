@@ -1,9 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import zh from '../locales/zh';
-import en from '../locales/en';
 import es from '../locales/es';
 
-export type Language = 'zh' | 'es'; // 只支持中文和西班牙语
+export type Language = 'es'; // 仅显示西班牙语
 
 interface LanguageContextType {
   language: Language;
@@ -16,8 +14,6 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 const translations = {
-  zh,
-  en,
   es,
 };
 
@@ -25,18 +21,13 @@ const translations = {
 function detectLanguage(isAdmin: boolean): Language {
   // 优先从localStorage读取用户手动选择的语言
   const saved = localStorage.getItem(isAdmin ? 'adminLanguage' : 'userLanguage');
-  if (saved === 'es' || saved === 'zh') {
-    return saved as Language;
+  if (saved === 'es') {
+    return 'es';
   }
   
   // 如果没有手动选择过，自动检测浏览器语言
   const browserLang = navigator.language || (navigator as any).userLanguage || '';
   const langLower = browserLang.toLowerCase();
-  
-  // 检测中文（包括简体、繁体）
-  if (langLower.startsWith('zh')) {
-    return 'zh';
-  }
   
   // 检测西班牙语
   if (langLower.startsWith('es')) {
@@ -72,8 +63,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       if (value && typeof value === 'object' && value !== null && k in value) {
         value = (value as Record<string, unknown>)[k];
       } else {
-        // 如果找不到翻译，尝试从中文获取
-        let fallback: unknown = translations.zh;
+        // 如果找不到翻译，使用西班牙语作为兜底
+        let fallback: unknown = translations.es;
         for (const k2 of keys) {
           if (fallback && typeof fallback === 'object' && fallback !== null && k2 in fallback) {
             fallback = (fallback as Record<string, unknown>)[k2];

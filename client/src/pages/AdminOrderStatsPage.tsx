@@ -14,7 +14,8 @@ export default function AdminOrderStatsPage() {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const response = await adminApi.getOrderStats();
+      // 统一使用包含收入统计的接口
+      const response = await adminApi.getStats();
       setStats(response.data);
     } catch (error) {
       console.error('加载统计数据失败:', error);
@@ -48,89 +49,130 @@ export default function AdminOrderStatsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-4 text-lg font-semibold">订单统计详情</h1>
+            <h1 className="ml-4 text-lg font-semibold">Estadísticas de pedidos</h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Summary Cards */}
+        {/* Tarjetas resumen */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">今日统计</h3>
+              <h3 className="text-sm font-medium text-gray-600">Hoy</h3>
               <span className="text-2xl">📦</span>
             </div>
             <div className="text-3xl font-bold text-blue-600 mb-1">
-              {stats?.today.orders || 0}
+              {stats?.todayOrders || 0}
             </div>
-            <div className="text-sm text-gray-500">订单数</div>
+            <div className="text-sm text-gray-500">Pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.today.revenue || 0).toFixed(2)}
+              ¥{(stats?.todayRevenue || 0).toFixed(2)}
             </div>
-            <div className="text-sm text-gray-500">收入</div>
+            <div className="text-sm text-gray-500">Ingresos</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-purple-500">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">本月统计</h3>
+              <h3 className="text-sm font-medium text-gray-600">Este mes</h3>
               <span className="text-2xl">📊</span>
             </div>
             <div className="text-3xl font-bold text-purple-600 mb-1">
-              {stats?.month.orders || 0}
+              {stats?.monthOrders || 0}
             </div>
-            <div className="text-sm text-gray-500">订单数</div>
+            <div className="text-sm text-gray-500">Pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.month.revenue || 0).toFixed(2)}
+              ¥{(stats?.monthRevenue || 0).toFixed(2)}
             </div>
-            <div className="text-sm text-gray-500">收入</div>
+            <div className="text-sm text-gray-500">Ingresos</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-600">总计</h3>
+              <h3 className="text-sm font-medium text-gray-600">Total</h3>
               <span className="text-2xl">💰</span>
             </div>
             <div className="text-3xl font-bold text-green-600 mb-1">
-              {stats?.total.orders || 0}
+              {stats?.totalOrders || 0}
             </div>
-            <div className="text-sm text-gray-500">总订单数</div>
+            <div className="text-sm text-gray-500">Total de pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.total.revenue || 0).toFixed(2)}
+              ¥{(stats?.totalRevenue || 0).toFixed(2)}
             </div>
-            <div className="text-sm text-gray-500">总收入</div>
+            <div className="text-sm text-gray-500">Ingresos totales</div>
           </div>
         </div>
 
-        {/* Last 30 Days Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold mb-4">近30天订单趋势</h2>
+        {/* Ingresos diarios（最近14天） */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Ingresos diarios (últimos 14 días)</h2>
           <div className="space-y-2">
-            {stats?.last30Days?.map((day: any, index: number) => (
-              <div key={index} className="flex items-center gap-4">
-                <div className="w-24 text-sm text-gray-600">
-                  {new Date(day.date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
-                      <div
-                        className="bg-blue-500 h-full rounded-full flex items-center justify-center text-white text-xs font-medium"
-                        style={{ width: `${Math.min((day.count / Math.max(...(stats.last30Days.map((d: any) => d.count) || [1]))) * 100, 100)}%` }}
-                      >
-                        {day.count > 0 && day.count}
+            {stats?.dailyRevenue?.map((day: any, index: number) => {
+              const maxRev = Math.max(...(stats.dailyRevenue?.map((d: any) => d.revenue) || [1]));
+              const width = Math.min((day.revenue / (maxRev || 1)) * 100, 100);
+              return (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-24 text-sm text-gray-600">
+                    {new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <div
+                          className="bg-green-500 h-full rounded-full flex items-center justify-center text-white text-xs font-medium"
+                          style={{ width: `${width}%` }}
+                        >
+                          {day.revenue > 0 && `¥${day.revenue.toFixed(2)}`}
+                        </div>
                       </div>
-                    </div>
-                    <div className="w-20 text-right text-sm font-medium">
-                      {day.count} 单
-                    </div>
-                    <div className="w-24 text-right text-sm text-green-600 font-medium">
-                      ¥{day.revenue.toFixed(2)}
+                      <div className="w-24 text-right text-sm text-green-600 font-medium">
+                        ¥{day.revenue.toFixed(2)}
+                      </div>
+                      <div className="w-16 text-right text-sm text-gray-600">
+                        {day.count} pedidos
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Ingresos mensuales（最近6个月） */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-4">Ingresos mensuales (últimos 6 meses)</h2>
+          <div className="space-y-2">
+            {stats?.monthlyRevenue?.map((m: any, index: number) => {
+              const maxRev = Math.max(...(stats.monthlyRevenue?.map((d: any) => d.revenue) || [1]));
+              const width = Math.min((m.revenue / (maxRev || 1)) * 100, 100);
+              const label = new Date(`${m.month}-01`).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+              return (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-28 text-sm text-gray-600">
+                    {label}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-6 relative overflow-hidden">
+                        <div
+                          className="bg-blue-500 h-full rounded-full flex items-center justify-center text-white text-xs font-medium"
+                          style={{ width: `${width}%` }}
+                        >
+                          {m.revenue > 0 && `¥${m.revenue.toFixed(2)}`}
+                        </div>
+                      </div>
+                      <div className="w-24 text-right text-sm text-blue-600 font-medium">
+                        ¥{m.revenue.toFixed(2)}
+                      </div>
+                      <div className="w-16 text-right text-sm text-gray-600">
+                        {m.count} pedidos
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

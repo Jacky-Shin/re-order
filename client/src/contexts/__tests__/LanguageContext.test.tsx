@@ -45,10 +45,10 @@ describe('LanguageContext', () => {
     });
 
     act(() => {
-      result.current.setLanguage('zh');
+      result.current.setLanguage('es');
     });
 
-    expect(result.current.language).toBe('zh');
+    expect(result.current.language).toBe('es');
   });
 
   it('应该提供翻译功能', () => {
@@ -57,7 +57,7 @@ describe('LanguageContext', () => {
     });
 
     act(() => {
-      result.current.setLanguage('zh');
+      result.current.setLanguage('es');
     });
 
     const translation = result.current.t('common.loading');
@@ -71,7 +71,7 @@ describe('LanguageContext', () => {
     });
 
     act(() => {
-      result.current.setLanguage('zh');
+      result.current.setLanguage('es');
     });
 
     const translation = result.current.t('order.status.pending');

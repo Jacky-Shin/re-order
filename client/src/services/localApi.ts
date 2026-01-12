@@ -387,7 +387,6 @@ class LocalApiService {
   async getAdminStats(): Promise<any> {
     await this.initialize();
     const orders = await databaseService.getOrders();
-    const payments = await databaseService.getPayments();
     const today = new Date().toISOString().split('T')[0];
     const thisMonth = new Date().toISOString().substring(0, 7);
 
@@ -395,16 +394,48 @@ class LocalApiService {
     const monthOrders = orders.filter(order => order.createdAt.startsWith(thisMonth));
     const todayPickups = todayOrders.filter(order => order.pickupNumber).length;
 
-    const todayRevenue = payments
-      .filter(p => p.createdAt.startsWith(today) && p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
+    // 统一收入计算：银行卡/信用卡使用已完成的支付记录；现金订单在状态为 ready/completed 时计入
+    const isOrderPaid = (order: Order) => {
+      if (order.paymentMethod === 'cash') {
+        return order.status === 'ready' || order.status === 'completed';
+      }
+      return order.paymentStatus === 'completed';
+    };
 
-    const monthRevenue = payments
-      .filter(p => p.createdAt.startsWith(thisMonth) && p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
+    const calcRevenue = (ordersToCalc: Order[], datePrefix: string | null) => {
+      return ordersToCalc
+        .filter(o => (datePrefix ? o.createdAt.startsWith(datePrefix) : true))
+        .filter(isOrderPaid)
+        .reduce((sum, o) => sum + o.totalAmount, 0);
+    };
+
+    const todayRevenue = calcRevenue(orders, today);
+    const monthRevenue = calcRevenue(orders, thisMonth);
 
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const preparingOrders = orders.filter(o => o.status === 'preparing').length;
+
+    // 日收入（最近14天）
+    const days = 14;
+    const dailyRevenue = Array.from({ length: days }).map((_, idx) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - 1 - idx));
+      const isoDate = date.toISOString().split('T')[0];
+      const revenue = calcRevenue(orders, isoDate);
+      const count = orders.filter(o => o.createdAt.startsWith(isoDate) && isOrderPaid(o)).length;
+      return { date: isoDate, revenue, count };
+    });
+
+    // 月收入（最近6个月）
+    const months = 6;
+    const monthlyRevenue = Array.from({ length: months }).map((_, idx) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - (months - 1 - idx));
+      const ym = date.toISOString().substring(0, 7); // YYYY-MM
+      const revenue = calcRevenue(orders, ym);
+      const count = orders.filter(o => o.createdAt.startsWith(ym) && isOrderPaid(o)).length;
+      return { month: ym, revenue, count };
+    });
 
     return {
       totalOrders: orders.length,
@@ -415,6 +446,8 @@ class LocalApiService {
       monthRevenue,
       pendingOrders,
       preparingOrders,
+      dailyRevenue,
+      monthlyRevenue,
     };
   }
 }

@@ -9,7 +9,7 @@ import { firebaseService } from '../services/firebaseService';
 export default function AdminOrdersPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>(searchParams.get('status') || 'all');
@@ -119,11 +119,11 @@ export default function AdminOrdersPage() {
     : orders.filter(o => o.status === filterStatus);
 
   const statusFilters = [
-    { value: 'all', label: t('admin.orders.filter') },
-    { value: 'pending', label: t('admin.orders.status.pending') },
+    { value: 'pending', label: 'Pendientes' },
     { value: 'preparing', label: t('admin.orders.status.preparing') },
     { value: 'ready', label: t('admin.orders.status.ready') },
     { value: 'completed', label: t('admin.orders.status.completed') },
+    { value: 'all', label: 'Todos los pedidos' },
   ];
 
   return (
@@ -142,27 +142,7 @@ export default function AdminOrdersPage() {
             </button>
             <h1 className="ml-4 text-lg font-semibold">{t('admin.orders.title')}</h1>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Language Switcher - 只显示西班牙语和中文，西班牙语在左，中文在右 */}
-            <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-              <button
-                onClick={() => setLanguage('es')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  language === 'es' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
-                }`}
-              >
-                ES
-              </button>
-              <button
-                onClick={() => setLanguage('zh')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  language === 'zh' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
-                }`}
-              >
-                中文
-              </button>
-            </div>
-          </div>
+          <div className="flex items-center gap-3" />
         </div>
       </div>
 
