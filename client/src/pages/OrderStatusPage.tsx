@@ -386,11 +386,6 @@ export default function OrderStatusPage() {
               </p>
             </div>
           )}
-          
-          <p className="text-gray-500 text-sm mt-3">
-            {t('order.createdAt')}: {new Date(order.createdAt).toLocaleString()}
-          </p>
-        </div>
 
         {/* Order Items */}
         <div className="card p-6 mb-6">
