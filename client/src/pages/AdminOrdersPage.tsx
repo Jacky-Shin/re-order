@@ -12,7 +12,7 @@ export default function AdminOrdersPage() {
   const { t } = useLanguage();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>(searchParams.get('status') || 'all');
+  const [filterStatus, setFilterStatus] = useState<string>(searchParams.get('status') || 'pending');
 
   useEffect(() => {
     loadOrders();
