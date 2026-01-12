@@ -411,6 +411,7 @@ class LocalApiService {
 
     const todayRevenue = calcRevenue(orders, today);
     const monthRevenue = calcRevenue(orders, thisMonth);
+    const totalRevenue = calcRevenue(orders, null); // 所有已支付订单的总收入
 
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const preparingOrders = orders.filter(o => o.status === 'preparing').length;
@@ -444,6 +445,7 @@ class LocalApiService {
       todayPickupCount: todayPickups,
       todayRevenue,
       monthRevenue,
+      totalRevenue,
       pendingOrders,
       preparingOrders,
       dailyRevenue,

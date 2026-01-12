@@ -56,7 +56,7 @@ export default function AdminOrderStatsPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Tarjetas resumen */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-sm p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-gray-600">Hoy</h3>
@@ -100,6 +100,21 @@ export default function AdminOrderStatsPage() {
               ¥{(stats?.totalRevenue || 0).toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">Ingresos totales</div>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 border-l-4 border-green-700">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-white">Ingresos Totales</h3>
+              <span className="text-2xl">💵</span>
+            </div>
+            <div className="text-4xl font-bold text-white mb-1">
+              ¥{(stats?.totalRevenue || 0).toFixed(2)}
+            </div>
+            <div className="text-sm text-green-100">Todos los ingresos</div>
+            <div className="text-lg font-semibold text-white mt-3">
+              {stats?.totalOrders || 0} pedidos
+            </div>
+            <div className="text-xs text-green-100">Total de pedidos</div>
           </div>
         </div>
 
