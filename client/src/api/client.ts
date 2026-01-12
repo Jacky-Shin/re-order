@@ -123,3 +123,18 @@ export const adminApi = useLocal ? localApi.adminApi : {
   getShopSettings: () => httpApi!.get<ShopSettings>('/admin/shop-settings'),
   updateShopSettings: (updates: Partial<ShopSettings>) => httpApi!.put<ShopSettings>('/admin/shop-settings', updates),
 };
+
+// 打印API
+export const printerApi = useLocal ? {
+  printOrder: async (orderId: string) => {
+    // 本地模式下，使用浏览器打印
+    console.warn('本地模式下，请使用浏览器打印功能');
+    return { data: { success: false, message: '本地模式不支持自动打印' } };
+  },
+  testConnection: async () => {
+    return { data: { success: false, connected: false } };
+  },
+} : {
+  printOrder: (orderId: string) => httpApi!.post<{ success: boolean; message: string }>('/printer/print-order', { orderId }),
+  testConnection: () => httpApi!.get<{ success: boolean; connected: boolean; message: string }>('/printer/test'),
+};

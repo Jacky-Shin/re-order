@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { paymentApi, orderApi } from '../api/client';
+import { paymentApi, orderApi, printerApi } from '../api/client';
 import { PaymentMethod, Order } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import StripePaymentForm from '../components/StripePaymentForm';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import { printOrder } from '../utils/printOrder';
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -57,10 +56,15 @@ export default function PaymentPage() {
           // 付款成功后自动打印小票
           if (order) {
             try {
-              await printOrder(order, response.data.payment);
-            } catch (printError) {
+              await printerApi.printOrder(order.id);
+              console.log('✅ 订单打印成功');
+            } catch (printError: any) {
               console.error('打印小票失败:', printError);
               // 打印失败不影响流程，继续执行
+              // 可以显示提示，但不阻止跳转
+              if (printError?.response?.data?.error) {
+                console.warn('打印错误:', printError.response.data.error);
+              }
             }
             navigate(`/order-status/${order.id}`);
           }
@@ -120,10 +124,14 @@ export default function PaymentPage() {
         // 付款成功后自动打印小票
         if (order) {
           try {
-            await printOrder(order, response.data.payment);
-          } catch (printError) {
+            await printerApi.printOrder(order.id);
+            console.log('✅ 订单打印成功');
+          } catch (printError: any) {
             console.error('打印小票失败:', printError);
             // 打印失败不影响流程，继续执行
+            if (printError?.response?.data?.error) {
+              console.warn('打印错误:', printError.response.data.error);
+            }
           }
           navigate(`/order-status/${order.id}`);
         }

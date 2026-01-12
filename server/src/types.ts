@@ -63,9 +63,10 @@ export interface Payment {
 
 export interface Order {
   id: string;
-  orderNumber: string; // 订单号（持续递增，不重置）
-  pickupNumber: number; // 取单号（每天从1开始，每日清零）
-  pickupDate: string; // 取单日期 YYYY-MM-DD
+  orderNumber: string; // 订单号（每日从0开始计数，每日清零）
+  orderCode?: string; // 订单编码（年月日+7位字符，例如：202503121231a31）
+  pickupNumber?: number; // 取单号（每天从1开始，每日清零）
+  pickupDate?: string; // 取单日期 YYYY-MM-DD
   items: CartItem[];
   totalAmount: number;
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';

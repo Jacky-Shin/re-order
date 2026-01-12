@@ -10,6 +10,7 @@ import { paymentRouter } from './routes/payment.js';
 import { merchantRouter } from './routes/merchant.js';
 import { adminRouter } from './routes/admin.js';
 import { uploadRouter } from './routes/upload.js';
+import { printerRouter } from './routes/printer.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -40,6 +41,7 @@ app.use('/api/payments', paymentRouter);
 app.use('/api/merchant', merchantRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/printer', printerRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
