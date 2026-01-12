@@ -56,8 +56,9 @@ export default function AdminOrdersPage() {
       
       // 限制订单数量，避免渲染过多数据导致卡顿
       const maxOrders = 200;
+      // 按创建时间升序排序：先下单的排在最前面（最早的订单优先处理）
       const sortedOrders = response.data
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
         .slice(0, maxOrders);
       
       setOrders(sortedOrders);
