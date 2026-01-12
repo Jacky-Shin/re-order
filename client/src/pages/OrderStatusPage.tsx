@@ -376,6 +376,28 @@ export default function OrderStatusPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {/* 错误提示 */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-red-800">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  if (orderId) {
+                    loadOrderById(orderId);
+                  } else if (orderNumber) {
+                    loadOrderByNumber(orderNumber);
+                  }
+                }}
+                className="text-sm text-red-600 hover:text-red-800 underline"
+              >
+                重试
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Order Status */}
         <div className="card p-8 mb-6 text-center">
           <div className={`inline-block px-6 py-3 rounded-2xl mb-6 text-lg font-bold shadow-lg ${getStatusColor(order.status)}`}>
