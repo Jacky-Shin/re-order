@@ -3,7 +3,7 @@ import zh from '../locales/zh';
 import en from '../locales/en';
 import es from '../locales/es';
 
-export type Language = 'zh' | 'en' | 'es';
+export type Language = 'zh' | 'es'; // 只支持中文和西班牙语
 
 interface LanguageContextType {
   language: Language;
@@ -23,10 +23,24 @@ const translations = {
 
 // 根据浏览器语言自动检测
 function detectLanguage(isAdmin: boolean): Language {
-  // 优先从localStorage读取用户选择的语言
+  // 优先从localStorage读取用户手动选择的语言
   const saved = localStorage.getItem(isAdmin ? 'adminLanguage' : 'userLanguage');
-  if (saved === 'es' || saved === 'en' || saved === 'zh') {
+  if (saved === 'es' || saved === 'zh') {
     return saved as Language;
+  }
+  
+  // 如果没有手动选择过，自动检测浏览器语言
+  const browserLang = navigator.language || (navigator as any).userLanguage || '';
+  const langLower = browserLang.toLowerCase();
+  
+  // 检测中文（包括简体、繁体）
+  if (langLower.startsWith('zh')) {
+    return 'zh';
+  }
+  
+  // 检测西班牙语
+  if (langLower.startsWith('es')) {
+    return 'es';
   }
   
   // 默认使用西班牙语

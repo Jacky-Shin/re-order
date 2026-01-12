@@ -7,10 +7,10 @@ interface LanguageSwitcherProps {
 export default function LanguageSwitcher({ variant = 'dark' }: LanguageSwitcherProps) {
   const { language, setLanguage } = useLanguage();
 
+  // 只保留中文和西班牙语，西班牙语在左边，中文在右边
   const languages = [
-    { code: 'zh' as const, label: '中文', short: 'zh', color: 'bg-red-500', hoverColor: 'hover:bg-red-600' },
-    { code: 'en' as const, label: 'English', short: 'en', color: 'bg-blue-500', hoverColor: 'hover:bg-blue-600' },
     { code: 'es' as const, label: 'Español', short: 'es', color: 'bg-green-500', hoverColor: 'hover:bg-green-600' },
+    { code: 'zh' as const, label: '中文', short: 'zh', color: 'bg-red-500', hoverColor: 'hover:bg-red-600' },
   ];
 
   if (variant === 'light') {

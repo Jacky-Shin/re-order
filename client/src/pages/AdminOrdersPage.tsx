@@ -143,16 +143,8 @@ export default function AdminOrdersPage() {
             <h1 className="ml-4 text-lg font-semibold">{t('admin.orders.title')}</h1>
           </div>
           <div className="flex items-center gap-3">
-            {/* Language Switcher */}
+            {/* Language Switcher - 只显示西班牙语和中文，西班牙语在左，中文在右 */}
             <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-              <button
-                onClick={() => setLanguage('zh')}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  language === 'zh' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
-                }`}
-              >
-                中文
-              </button>
               <button
                 onClick={() => setLanguage('es')}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
@@ -160,6 +152,14 @@ export default function AdminOrdersPage() {
                 }`}
               >
                 ES
+              </button>
+              <button
+                onClick={() => setLanguage('zh')}
+                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  language === 'zh' ? 'bg-white text-sb-green shadow-sm' : 'text-gray-600 hover:bg-white hover:bg-opacity-50'
+                }`}
+              >
+                中文
               </button>
             </div>
           </div>
