@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       subtitle: `${t('admin.stats.month')}: ¥${(stats?.monthRevenue || 0).toFixed(2)}`,
       icon: '💰',
       color: 'bg-green-500',
-      link: '/admin/payments',
+      link: null, // 今日收入仅作为数据展示，不跳转
       extraInfo: stats?.todayCashRevenue !== undefined && stats?.todayOtherRevenue !== undefined ? (
         <div className="mt-2 space-y-1">
           <p className="text-xs text-gray-500">
@@ -172,18 +172,26 @@ export default function AdminDashboard() {
           {statCards.map((card, index) => (
             <div
               key={index}
-              onClick={() => navigate(card.link)}
-              className="card card-hover cursor-pointer group relative overflow-hidden"
+              onClick={card.link ? () => navigate(card.link!) : undefined}
+              className={`card group relative overflow-hidden ${
+                card.link ? 'card-hover cursor-pointer' : 'cursor-default'
+              }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              {card.link && (
+                <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              )}
               <div className="relative p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className={`w-14 h-14 rounded-2xl ${card.color} flex items-center justify-center text-3xl shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                  <div className={`w-14 h-14 rounded-2xl ${card.color} flex items-center justify-center text-3xl shadow-lg ${
+                    card.link ? 'group-hover:scale-110 transition-transform duration-300' : ''
+                  }`}>
                     {card.icon}
                   </div>
-                  <svg className="w-6 h-6 text-gray-300 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  {card.link && (
+                    <svg className="w-6 h-6 text-gray-300 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
                 </div>
                 <p className="text-gray-500 text-sm font-medium mb-2">{card.title}</p>
                 <p className="text-3xl font-bold text-gray-900 mb-1">{card.value}</p>
