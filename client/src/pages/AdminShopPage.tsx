@@ -172,7 +172,7 @@ export default function AdminShopPage() {
       <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
         <img
           src={getBannerImage()}
-          alt="店铺图片"
+          alt={t('admin.menu.myShop')}
           className="w-full h-full object-cover"
           onError={(e) => {
             // 如果本地图片加载失败，使用占位图
@@ -181,7 +181,7 @@ export default function AdminShopPage() {
         />
         {/* 提示信息 */}
         <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-lg text-xs backdrop-blur-sm">
-          店铺图片：请将图片文件放在 <code className="bg-black/40 px-1 rounded">client/public/shop-banner.jpg</code>
+          {t('admin.menu.myShop')}: {t('admin.menu.imageFormatHint')}
         </div>
       </div>
 
@@ -203,7 +203,7 @@ export default function AdminShopPage() {
                 onClick={() => navigate('/admin')}
                 className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-300 backdrop-blur-sm border border-white/20 text-sm font-medium"
               >
-                返回管理
+                {t('common.back')}
               </button>
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function AdminShopPage() {
         <div className="relative">
           <input
             type="text"
-            placeholder="搜索商品..."
+            placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 focus:border-sb-green focus:ring-2 focus:ring-sb-green/20 transition-all"
@@ -289,7 +289,7 @@ export default function AdminShopPage() {
                       alt={item.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Starbucks';
                       }}
                     />
                     {!item.available && (
@@ -311,7 +311,7 @@ export default function AdminShopPage() {
               ))}
               {menuItems.length === 0 && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-gray-500">未找到相关商品</p>
+                  <p className="text-gray-500">{t('menu.empty')}</p>
                 </div>
               )}
             </div>
@@ -330,7 +330,7 @@ export default function AdminShopPage() {
                       alt={item.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=星巴克';
+                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400?text=Starbucks';
                       }}
                     />
                     {!item.available && (

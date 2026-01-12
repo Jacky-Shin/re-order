@@ -30,9 +30,9 @@ export default function AdminPaymentsPage() {
 
   const getPaymentMethodText = (method: string) => {
     const methodMap: Record<string, string> = {
-      cash: '现金支付',
-      card: '银行卡',
-      visa: 'Visa',
+      cash: t('payment.cash'),
+      card: t('payment.card'),
+      visa: t('payment.visa'),
     };
     return methodMap[method] || method;
   };
@@ -50,11 +50,11 @@ export default function AdminPaymentsPage() {
 
   const getStatusText = (status: Payment['status']) => {
     const statusMap = {
-      pending: '待支付',
-      processing: '处理中',
-      completed: '已完成',
-      failed: '失败',
-      cancelled: '已取消',
+      pending: t('admin.payments.pending'),
+      processing: t('admin.payments.processing'),
+      completed: t('order.status.completed'),
+      failed: t('common.error'),
+      cancelled: t('order.status.cancelled'),
     };
     return statusMap[status];
   };
@@ -77,10 +77,10 @@ export default function AdminPaymentsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-4 text-lg font-semibold">支付记录</h1>
+            <h1 className="ml-4 text-lg font-semibold">{t('admin.payments.title')}</h1>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-600">总收入</div>
+            <div className="text-sm text-gray-600">{t('admin.dashboard.totalRevenue')}</div>
             <div className="text-2xl font-bold text-sb-green">¥{totalRevenue.toFixed(2)}</div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function AdminPaymentsPage() {
           </div>
         ) : payments.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-500">暂无支付记录</p>
+            <p className="text-gray-500">{t('admin.payments.empty')}</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -103,10 +103,10 @@ export default function AdminPaymentsPage() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.transactionId')}</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">订单号</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">支付方式</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">金额</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.orderNumber')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.method')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.amount')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.status')}</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.payments.paidAt')}</th>
                   </tr>
                 </thead>

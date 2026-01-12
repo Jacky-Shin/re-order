@@ -413,6 +413,17 @@ class LocalApiService {
     const monthRevenue = calcRevenue(orders, thisMonth);
     const totalRevenue = calcRevenue(orders, null); // 所有已支付订单的总收入
 
+    // 今日收入按支付方式分类
+    const todayCashRevenue = orders
+      .filter(o => o.createdAt.startsWith(today))
+      .filter(o => o.paymentMethod === 'cash' && (o.status === 'ready' || o.status === 'completed'))
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+    
+    const todayOtherRevenue = orders
+      .filter(o => o.createdAt.startsWith(today))
+      .filter(o => o.paymentMethod !== 'cash' && o.paymentStatus === 'completed')
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const preparingOrders = orders.filter(o => o.status === 'preparing').length;
 
@@ -444,6 +455,8 @@ class LocalApiService {
       monthOrders: monthOrders.length,
       todayPickupCount: todayPickups,
       todayRevenue,
+      todayCashRevenue,
+      todayOtherRevenue,
       monthRevenue,
       totalRevenue,
       pendingOrders,

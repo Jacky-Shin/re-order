@@ -108,14 +108,14 @@ export default function AdminMenuPage() {
           imageUrl = await uploadImage();
         } catch (uploadError: any) {
           console.error('图片上传失败:', uploadError);
-          alert('图片上传失败: ' + (uploadError.message || '请检查网络连接或稍后重试'));
+          alert(t('admin.menu.imageUploadFailed') + ': ' + (uploadError.message || t('admin.menu.checkNetworkOrRetry')));
           return;
         }
       }
 
       // 如果没有图片URL也没有上传图片，提示用户
       if (!imageUrl && !imageFile) {
-        if (!confirm('未选择图片，是否继续添加商品？')) {
+        if (!confirm(t('admin.menu.continueWithoutImage'))) {
           return;
         }
       }
@@ -135,13 +135,13 @@ export default function AdminMenuPage() {
       resetForm();
     } catch (error: any) {
       console.error('保存商品失败:', error);
-      const errorMessage = error.response?.data?.error || error.message || '保存失败，请检查网络连接';
+      const errorMessage = error.response?.data?.error || error.message || t('admin.menu.saveFailed');
       alert(errorMessage);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个商品吗？')) return;
+    if (!confirm(t('admin.menu.confirmDelete'))) return;
     try {
       await adminApi.deleteMenuItem(id);
       await loadMenuItems();
@@ -173,13 +173,13 @@ export default function AdminMenuPage() {
     if (file) {
       // 验证文件类型
       if (!file.type.startsWith('image/')) {
-        alert('请选择图片文件');
+        alert(t('admin.menu.selectImageFile'));
         return;
       }
       
       // 验证文件大小（5MB）
       if (file.size > 5 * 1024 * 1024) {
-        alert('图片大小不能超过5MB');
+        alert(t('admin.menu.imageSizeExceeded'));
         return;
       }
 
@@ -216,7 +216,7 @@ export default function AdminMenuPage() {
             resolve(base64Data);
           };
           reader.onerror = () => {
-            reject(new Error('读取图片失败，请重试'));
+            reject(new Error(t('admin.menu.readImageFailed')));
           };
           reader.readAsDataURL(imageFile);
         });
@@ -232,13 +232,13 @@ export default function AdminMenuPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: '上传失败' }));
-        throw new Error(errorData.error || `上传失败: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: t('admin.menu.uploadFailed') }));
+        throw new Error(errorData.error || `${t('admin.menu.uploadFailed')}: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       if (!data.url) {
-        throw new Error('服务器返回的数据格式错误');
+        throw new Error(t('admin.menu.serverDataFormatError'));
       }
       
       // 返回完整的图片URL
@@ -258,7 +258,7 @@ export default function AdminMenuPage() {
             resolve(reader.result as string);
           };
           reader.onerror = () => {
-            reject(new Error('读取图片失败，请重试'));
+            reject(new Error(t('admin.menu.readImageFailed')));
           };
           reader.readAsDataURL(imageFile!);
         });
@@ -334,14 +334,14 @@ export default function AdminMenuPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="ml-4 text-lg font-semibold">商品管理</h1>
+            <h1 className="ml-4 text-lg font-semibold">{t('admin.menu.title')}</h1>
           </div>
           {!showAddForm && (
             <button
               onClick={() => setShowAddForm(true)}
               className="px-4 py-2 bg-sb-green text-white rounded-lg font-semibold hover:bg-opacity-90"
             >
-              添加商品
+              {t('admin.menu.add')}
             </button>
           )}
         </div>
@@ -351,13 +351,13 @@ export default function AdminMenuPage() {
         {showAddForm ? (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">
-              {editingItem ? '编辑商品' : '添加商品'}
+              {editingItem ? t('admin.menu.edit') : t('admin.menu.add')}
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    商品名称 <span className="text-red-500">*</span>
+                    {t('admin.menu.productNameRequired')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -369,7 +369,7 @@ export default function AdminMenuPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    英文名称
+                    {t('admin.menu.englishName')}
                   </label>
                   <input
                     type="text"
@@ -406,7 +406,7 @@ export default function AdminMenuPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    基础价格 <span className="text-red-500">*</span>
+                    {t('admin.menu.basePrice')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -419,7 +419,7 @@ export default function AdminMenuPage() {
                   />
                   {(formData.price && formData.price > 0) && formData.customizations?.length && (
                     <div className="mt-2 p-2 bg-sb-light-green rounded-lg">
-                      <p className="text-xs text-gray-600 mb-1">价格范围预览：</p>
+                      <p className="text-xs text-gray-600 mb-1">{t('admin.menu.priceRangePreview')}:</p>
                       {(() => {
                         const { minPrice, maxPrice } = calculatePriceRange();
                         return minPrice === maxPrice ? (
@@ -437,7 +437,7 @@ export default function AdminMenuPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  商品图片
+                  {t('admin.menu.productImage')}
                 </label>
                 
                 {/* 图片预览 */}
@@ -445,7 +445,7 @@ export default function AdminMenuPage() {
                   <div className="mb-3">
                     <img
                       src={imagePreview}
-                      alt="预览"
+                      alt={t('admin.menu.preview')}
                       className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
                   </div>
@@ -465,7 +465,7 @@ export default function AdminMenuPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <span className="text-sm text-gray-600">
-                        {imageFile ? imageFile.name : '从相册选择图片'}
+                        {imageFile ? imageFile.name : t('admin.menu.selectFromGallery')}
                       </span>
                     </div>
                   </label>
@@ -480,7 +480,7 @@ export default function AdminMenuPage() {
                       }}
                       className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                     >
-                      清除
+                      {t('admin.menu.clear')}
                     </button>
                   )}
                 </div>
@@ -488,7 +488,7 @@ export default function AdminMenuPage() {
                 {/* URL输入（备用） */}
                 <div className="mt-3">
                   <label className="block text-xs text-gray-500 mb-1">
-                    或输入图片URL（可选）
+                    {t('admin.menu.orEnterImageUrl')}
                   </label>
                   <input
                     type="url"
@@ -505,13 +505,13 @@ export default function AdminMenuPage() {
                 </div>
 
                 <p className="text-xs text-gray-500 mt-2">
-                  支持 JPG、PNG、GIF 格式，最大 5MB
+                  {t('admin.menu.imageFormatHint')}
                 </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  描述
+                  {t('admin.menu.description')}
                 </label>
                 <textarea
                   value={formData.description}
@@ -530,7 +530,7 @@ export default function AdminMenuPage() {
                   className="w-4 h-4 text-sb-green border-gray-300 rounded focus:ring-sb-green"
                 />
                 <label htmlFor="available" className="ml-2 text-sm text-gray-700">
-                  上架状态
+                  {t('admin.menu.listingStatus')}
                 </label>
               </div>
 
@@ -538,7 +538,7 @@ export default function AdminMenuPage() {
               <div className="border-t pt-4">
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    商品属性（完全自定义）
+                    {t('admin.menu.productAttributes')}
                   </label>
                   <p className="text-xs text-gray-500 mb-3">
                     {t('admin.menu.example')}
@@ -609,7 +609,7 @@ export default function AdminMenuPage() {
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-gray-500">选项列表</span>
+                          <span className="text-xs text-gray-500">{t('admin.menu.optionList')}</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -673,7 +673,7 @@ export default function AdminMenuPage() {
                         ))}
                         {customization.options.length === 0 && (
                           <p className="text-xs text-gray-400 italic">
-                            点击"添加选项"为此属性组添加选项
+                            {t('admin.menu.clickToAddOptions')}
                           </p>
                         )}
                       </div>
@@ -690,7 +690,7 @@ export default function AdminMenuPage() {
                     uploading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
-                  {uploading ? '上传中...' : editingItem ? '更新' : '添加'}
+                  {uploading ? t('admin.menu.uploading') : editingItem ? t('admin.menu.update') : t('admin.menu.addButton')}
                 </button>
                 <button
                   type="button"
@@ -698,7 +698,7 @@ export default function AdminMenuPage() {
                   disabled={uploading}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 disabled:opacity-50"
                 >
-                  取消
+                  {t('admin.menu.cancel')}
                 </button>
               </div>
             </form>
@@ -717,12 +717,12 @@ export default function AdminMenuPage() {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">商品</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">分类</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">价格</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">销量</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">操作</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.menu.product')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.menu.category')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.menu.price')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.menu.sales')}</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('admin.menu.productStatus')}</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('admin.menu.productActions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -735,7 +735,7 @@ export default function AdminMenuPage() {
                             alt={item.name}
                             className="w-12 h-12 rounded object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=星巴克';
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/100?text=Starbucks';
                             }}
                           />
                           <div>
@@ -749,7 +749,7 @@ export default function AdminMenuPage() {
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-sb-green">¥{item.price}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        销量: {salesCounts[item.id] || 0}
+                        {t('admin.menu.sales')}: {salesCounts[item.id] || 0}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${
@@ -757,7 +757,7 @@ export default function AdminMenuPage() {
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {item.available ? '上架' : '下架'}
+                          {item.available ? t('admin.menu.listed') : t('admin.menu.unlisted')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">

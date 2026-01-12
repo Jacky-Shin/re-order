@@ -186,12 +186,12 @@ export default function AdminCategoriesPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
-                    placeholder="例如：咖啡、茶饮、小食"
+                    placeholder={t('categories.namePlaceholder')}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    英文名称
+                    {t('categories.nameEn')}
                   </label>
                   <input
                     type="text"
@@ -208,14 +208,14 @@ export default function AdminCategoriesPage() {
                   type="submit"
                   className="flex-1 bg-sb-green text-white py-2 rounded-lg font-semibold hover:bg-opacity-90"
                 >
-                  {editingCategory ? '更新' : '添加'}
+                  {editingCategory ? t('common.save') : t('common.add')}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50"
                 >
-                  取消
+                  {t('common.cancel')}
                 </button>
               </div>
             </form>
@@ -226,7 +226,7 @@ export default function AdminCategoriesPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sb-green"></div>
-            <p className="mt-4 text-gray-500">加载中...</p>
+            <p className="mt-4 text-gray-500">{t('common.loading')}</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -265,7 +265,7 @@ export default function AdminCategoriesPage() {
                           )}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          排序: {category.order}
+                          {t('categories.order')}: {category.order}
                         </div>
                       </div>
                     </div>

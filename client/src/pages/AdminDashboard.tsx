@@ -49,6 +49,16 @@ export default function AdminDashboard() {
       icon: '💰',
       color: 'bg-green-500',
       link: '/admin/payments',
+      extraInfo: stats?.todayCashRevenue !== undefined && stats?.todayOtherRevenue !== undefined ? (
+        <div className="mt-2 space-y-1">
+          <p className="text-xs text-gray-500">
+            {t('admin.stats.cashRevenue')}: ¥{(stats.todayCashRevenue || 0).toFixed(2)}
+          </p>
+          <p className="text-xs text-gray-500">
+            {t('admin.stats.otherPaymentRevenue')}: ¥{(stats.todayOtherRevenue || 0).toFixed(2)}
+          </p>
+        </div>
+      ) : null,
     },
     {
       title: t('admin.orders.pending'),
@@ -76,8 +86,8 @@ export default function AdminDashboard() {
       color: 'bg-teal-50 hover:bg-teal-100 border-teal-200',
     },
     {
-      title: '店铺管理',
-      description: '装修店铺，上传店铺图片',
+      title: t('admin.menu.myShop'),
+      description: '',
       icon: '🏪',
       link: '/admin/shop',
       color: 'bg-pink-50 hover:bg-pink-100 border-pink-200',
@@ -179,6 +189,7 @@ export default function AdminDashboard() {
                 {card.subtitle && (
                   <p className="text-xs text-gray-400 font-medium">{card.subtitle}</p>
                 )}
+                {card.extraInfo}
               </div>
             </div>
           ))}
