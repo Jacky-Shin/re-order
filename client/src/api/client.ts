@@ -126,7 +126,7 @@ export const adminApi = useLocal ? localApi.adminApi : {
 
 // 打印API
 export const printerApi = useLocal ? {
-  printOrder: async (orderId: string) => {
+  printOrder: async (_orderId: string) => {
     // 本地模式下，使用浏览器打印
     console.warn('本地模式下，请使用浏览器打印功能');
     return { data: { success: false, message: '本地模式不支持自动打印' } };

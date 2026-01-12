@@ -299,6 +299,25 @@ export default function OrderStatusPage() {
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sb-green"></div>
           <p className="mt-4 text-gray-500">{t('common.loading')}</p>
+          {error && (
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg max-w-md mx-auto">
+              <p className="text-sm text-yellow-800">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  setLoading(true);
+                  if (orderId) {
+                    loadOrderById(orderId);
+                  } else if (orderNumber) {
+                    loadOrderByNumber(orderNumber);
+                  }
+                }}
+                className="mt-2 text-sm text-yellow-600 hover:text-yellow-800 underline"
+              >
+                重试
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -308,13 +327,29 @@ export default function OrderStatusPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">{t('common.error')}</p>
-          <button
-            onClick={() => navigate('/menu')}
-            className="text-sb-green hover:underline"
-          >
-            {t('common.back')}
-          </button>
+          <p className="text-gray-500 mb-4">{error || t('common.error')}</p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setLoading(true);
+                if (orderId) {
+                  loadOrderById(orderId);
+                } else if (orderNumber) {
+                  loadOrderByNumber(orderNumber);
+                }
+              }}
+              className="px-4 py-2 bg-sb-green text-white rounded-lg hover:bg-opacity-90"
+            >
+              重试
+            </button>
+            <button
+              onClick={() => navigate('/menu')}
+              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              {t('common.back')}
+            </button>
+          </div>
         </div>
       </div>
     );

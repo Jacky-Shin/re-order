@@ -54,6 +54,7 @@ export const mockCartItem: CartItem = {
 export const mockOrder: Order = {
   id: 'order-1',
   orderNumber: 'ORD-001',
+  orderCode: '202501011234567',
   items: [mockCartItem],
   totalAmount: 64.00,
   status: 'pending',
