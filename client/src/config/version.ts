@@ -37,13 +37,34 @@ export function hasNewVersion(): boolean {
 
 /**
  * 清除所有缓存数据
+ * 注意：此函数只清除缓存，不会删除业务数据（商品、订单等）
  */
 export async function clearAllCache(): Promise<void> {
   if (typeof window === 'undefined') return;
 
   try {
-    // 清除localStorage（保留必要的配置）
-    const keysToKeep = ['eruda', 'firebaseConfig']; // 保留调试和配置
+    // 清除localStorage（保留业务数据和必要配置）
+    const keysToKeep = [
+      // 业务数据 - 必须保留
+      'db_menu_items',           // 商品数据
+      'db_orders',                // 订单数据
+      'db_categories',            // 分类数据
+      'db_payments',              // 支付记录
+      'db_merchant_accounts',     // 商家账户
+      'db_last_pickup_date',      // 最后取单日期
+      'db_last_order_number',     // 最后订单号
+      'db_last_pickup_number',    // 最后取单号
+      'db_shop_settings',         // 店铺设置
+      // 用户配置 - 保留
+      'userLanguage',             // 用户语言设置
+      'adminLanguage',            // 管理员语言设置
+      'adminUsername',            // 管理员登录状态
+      // 系统配置 - 保留
+      'eruda',                    // 调试工具
+      'firebaseConfig',           // Firebase配置
+      VERSION_STORAGE_KEY,        // 版本号（会在更新后重新设置）
+    ];
+    
     const allKeys = Object.keys(localStorage);
     allKeys.forEach(key => {
       if (!keysToKeep.includes(key)) {
@@ -51,28 +72,12 @@ export async function clearAllCache(): Promise<void> {
       }
     });
 
-    // 清除sessionStorage
+    // 清除sessionStorage（通常只存储临时会话数据，不影响业务数据）
     sessionStorage.clear();
 
-    // 清除IndexedDB（如果使用）
-    if ('indexedDB' in window) {
-      const databases = await indexedDB.databases();
-      await Promise.all(
-        databases
-          .filter(db => db.name) // 过滤掉没有名称的数据库
-          .map(db => {
-            return new Promise<void>((resolve, reject) => {
-              const deleteReq = indexedDB.deleteDatabase(db.name!);
-              deleteReq.onsuccess = () => resolve();
-              deleteReq.onerror = () => reject(deleteReq.error);
-              deleteReq.onblocked = () => {
-                console.warn(`数据库 ${db.name} 删除被阻止`);
-                resolve();
-              };
-            });
-          })
-      );
-    }
+    // 注意：不清除IndexedDB，因为可能存储业务数据
+    // 如果将来使用IndexedDB存储业务数据，需要在这里添加保护逻辑
+    // 目前应用主要使用localStorage和Firebase，IndexedDB可能被其他库使用
 
     // 清除Service Worker缓存（如果存在）
     if ('serviceWorker' in navigator) {
@@ -90,7 +95,8 @@ export async function clearAllCache(): Promise<void> {
       );
     }
 
-    console.log('✅ 所有缓存已清除');
+    console.log('✅ 缓存已清除（业务数据已保留）');
+    console.log('📦 保留的业务数据：商品、订单、分类、支付记录、商家账户等');
   } catch (error) {
     console.error('❌ 清除缓存时出错:', error);
     throw error;
