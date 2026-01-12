@@ -238,7 +238,7 @@ export default function MenuPage() {
                     setSelectedCategoryId(category.id);
                     setSearchQuery(''); // 清除搜索
                   }}
-                  className={`px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-all duration-300 whitespace-nowrap ${
+                  className={`px-2 md:px-4 py-2 md:py-3 text-left text-sm md:text-base lg:text-lg font-medium rounded-lg md:rounded-xl transition-all duration-300 whitespace-nowrap ${
                     selectedCategoryId === category.id
                       ? 'bg-gradient-to-r from-sb-green to-sb-dark-green text-white shadow-md'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-sb-green bg-white'
@@ -289,10 +289,10 @@ export default function MenuPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.name}</h3>
-                  <p className="text-xs text-gray-500 mb-3 font-medium">{item.nameEn}</p>
+                  <h3 className="font-bold text-gray-900 mb-1 text-base md:text-lg leading-tight">{item.name}</h3>
+                  <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
+                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
                       ¥{item.price.toFixed(2)}
                     </p>
                     {item.available && (
@@ -346,10 +346,10 @@ export default function MenuPage() {
                   )}
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-gray-900 mb-1 text-lg leading-tight">{item.name}</h3>
-                  <p className="text-xs text-gray-500 mb-3 font-medium">{item.nameEn}</p>
+                  <h3 className="font-bold text-gray-900 mb-1 text-base md:text-lg leading-tight">{item.name}</h3>
+                  <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
+                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
                       ¥{item.price.toFixed(2)}
                     </p>
                     {item.available && (
