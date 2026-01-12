@@ -127,3 +127,10 @@ export interface ShopSettings {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface User {
+  id: string;
+  phone: string;
+  name: string;
+  createdAt: string;
+}

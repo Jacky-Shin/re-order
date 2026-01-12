@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { menuApi } from '../api/client';
 import { MenuItem, CartItem, SelectedCustomization } from '../types';
 import { useCart } from '../contexts/CartContext';
+import BottomNav from '../components/BottomNav';
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -290,6 +291,7 @@ export default function ItemDetailPage() {
           </button>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

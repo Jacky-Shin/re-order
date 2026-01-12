@@ -7,6 +7,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import BottomNav from '../components/BottomNav';
 
 export default function MenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -372,6 +373,7 @@ export default function MenuPage() {
         )}
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

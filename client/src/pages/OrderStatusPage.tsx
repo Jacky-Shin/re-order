@@ -6,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
 import { firebaseService } from '../services/firebaseService';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import BottomNav from '../components/BottomNav';
 import { withTimeout, safeAsync, debounce } from '../utils/errorHandler';
 
 export default function OrderStatusPage() {
@@ -667,11 +668,12 @@ export default function OrderStatusPage() {
 
         <button
           onClick={() => navigate('/menu')}
-          className="btn-secondary w-full"
+          className="btn-secondary w-full mb-20"
         >
           {t('orderStatus.continueShopping')}
         </button>
       </div>
+      <BottomNav />
     </div>
   );
 }

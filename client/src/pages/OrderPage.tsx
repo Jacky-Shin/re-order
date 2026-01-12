@@ -2,18 +2,28 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { orderApi } from '../api/client';
 import { useCart } from '../contexts/CartContext';
+import { useUser } from '../contexts/UserContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function OrderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { cart, getTotal, clearCart } = useCart();
+  const { user } = useUser();
   const { t } = useLanguage();
   const [tableNumber, setTableNumber] = useState(searchParams.get('table') || '');
   
-  const [customerName, setCustomerName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState(user?.name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [submitting, setSubmitting] = useState(false);
+
+  // 当用户信息加载后，自动填充
+  useEffect(() => {
+    if (user) {
+      setCustomerName(user.name);
+      setPhone(user.phone);
+    }
+  }, [user]);
 
   useEffect(() => {
     const table = searchParams.get('table');

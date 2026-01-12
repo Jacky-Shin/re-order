@@ -1,10 +1,14 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './contexts/CartContext';
+import { UserProvider } from './contexts/UserContext';
 import { useLanguage } from './contexts/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import UserProtectedRoute from './components/UserProtectedRoute';
 import ScanPage from './pages/ScanPage';
+import HomePage from './pages/HomePage';
 import MenuPage from './pages/MenuPage';
+import MyOrdersPage from './pages/MyOrdersPage';
 import ItemDetailPage from './pages/ItemDetailPage';
 import CartPage from './pages/CartPage';
 import OrderPage from './pages/OrderPage';
@@ -35,14 +39,17 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<ScanPage />} />
-      <Route path="/menu" element={<MenuPage />} />
-      <Route path="/item/:id" element={<ItemDetailPage />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/order" element={<OrderPage />} />
-      <Route path="/order/:orderNumber" element={<OrderStatusPage />} />
-      <Route path="/order-status/:orderId" element={<OrderStatusPage />} />
-      <Route path="/payment/:orderId" element={<PaymentPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/scan" element={<ScanPage />} />
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/menu" element={<UserProtectedRoute><MenuPage /></UserProtectedRoute>} />
+      <Route path="/item/:id" element={<UserProtectedRoute><ItemDetailPage /></UserProtectedRoute>} />
+      <Route path="/cart" element={<UserProtectedRoute><CartPage /></UserProtectedRoute>} />
+      <Route path="/order" element={<UserProtectedRoute><OrderPage /></UserProtectedRoute>} />
+      <Route path="/order/:orderNumber" element={<UserProtectedRoute><OrderStatusPage /></UserProtectedRoute>} />
+      <Route path="/order-status/:orderId" element={<UserProtectedRoute><OrderStatusPage /></UserProtectedRoute>} />
+      <Route path="/my-orders" element={<UserProtectedRoute><MyOrdersPage /></UserProtectedRoute>} />
+      <Route path="/payment/:orderId" element={<UserProtectedRoute><PaymentPage /></UserProtectedRoute>} />
       <Route path="/qrcode" element={<QRCodePage />} />
       <Route path="/merchant/settings" element={<ProtectedRoute><MerchantSettingsPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
@@ -58,12 +65,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <VersionChecker />
-        <AppRoutes />
-      </BrowserRouter>
-    </CartProvider>
+    <UserProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <VersionChecker />
+          <AppRoutes />
+        </BrowserRouter>
+      </CartProvider>
+    </UserProvider>
   );
 }
 

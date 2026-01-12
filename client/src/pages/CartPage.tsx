@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import BottomNav from '../components/BottomNav';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -180,6 +181,7 @@ export default function CartPage() {
           </button>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }
