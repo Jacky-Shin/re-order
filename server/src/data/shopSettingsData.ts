@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   nameEn: 'Starbucks',
   description: '欢迎光临星巴克',
   descriptionEn: 'Welcome to Starbucks',
-  bannerImages: [],
+  bannerImages: ['/shop-banner.jpg'], // 使用本地图片路径
   logo: '',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),

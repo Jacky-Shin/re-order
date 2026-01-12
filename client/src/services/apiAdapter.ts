@@ -190,14 +190,14 @@ export const adminApi = {
   getMenuItemSalesCounts: async () => new ApiResponse(await localApiService.getAllMenuItemSalesCounts()),
   // 店铺设置
   getShopSettings: async () => {
-    // 返回默认店铺设置
+    // 返回默认店铺设置（使用本地图片）
     const defaultSettings: ShopSettings = {
       id: 'default',
       name: '星巴克',
       nameEn: 'Starbucks',
       description: '欢迎光临星巴克',
       descriptionEn: 'Welcome to Starbucks',
-      bannerImages: [],
+      bannerImages: ['/shop-banner.jpg'], // 使用本地图片路径
       logo: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -212,7 +212,7 @@ export const adminApi = {
       nameEn: 'Starbucks',
       description: '欢迎光临星巴克',
       descriptionEn: 'Welcome to Starbucks',
-      bannerImages: updates.bannerImages || [],
+      bannerImages: updates.bannerImages || ['/shop-banner.jpg'], // 默认使用本地图片
       logo: updates.logo || '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

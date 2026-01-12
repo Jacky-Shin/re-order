@@ -146,32 +146,20 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sb-light-green/30 via-white to-gray-50 pb-24">
-      {/* 店铺图片 - 顶部展示 */}
-      {shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 && (
-        <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
-          <img
-            src={shopSettings.bannerImages[0]}
-            alt="店铺图片"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=店铺图片';
-            }}
-          />
-          {/* 如果有多张图片，显示指示器 */}
-          {shopSettings.bannerImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              {shopSettings.bannerImages.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === 0 ? 'bg-white' : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* 店铺图片 - 顶部展示（从本地读取） */}
+      <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
+        <img
+          src={shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 
+            ? shopSettings.bannerImages[0] 
+            : '/shop-banner.jpg'}
+          alt="店铺图片"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // 如果本地图片加载失败，使用占位图
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=400&fit=crop';
+          }}
+        />
+      </div>
 
       {/* Header - 现代化设计 */}
       <div className="bg-gradient-to-r from-sb-green via-sb-green to-sb-dark-green text-white sticky top-0 z-20 shadow-lg">

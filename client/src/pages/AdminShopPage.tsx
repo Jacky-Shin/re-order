@@ -17,8 +17,6 @@ export default function AdminShopPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [showImageUpload, setShowImageUpload] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -148,69 +146,13 @@ export default function AdminShopPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      alert('请选择图片文件');
-      return;
+  // 获取店铺图片路径（优先使用设置中的图片，否则使用默认本地图片）
+  const getBannerImage = () => {
+    if (shopSettings?.bannerImages && shopSettings.bannerImages.length > 0) {
+      return shopSettings.bannerImages[0];
     }
-
-    if (file.size > 2 * 1024 * 1024) {
-      alert('图片大小不能超过2MB');
-      return;
-    }
-
-    try {
-      setUploading(true);
-      
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          if (!result) {
-            reject(new Error('图片读取失败'));
-            return;
-          }
-          resolve(result);
-        };
-        reader.onerror = (error) => {
-          reject(new Error('图片读取失败: ' + (error?.toString() || '未知错误')));
-        };
-        reader.readAsDataURL(file);
-      });
-      
-      const currentBanners = shopSettings?.bannerImages || [];
-      const updatedBanners = [...currentBanners, base64Image];
-      
-      await adminApi.updateShopSettings({
-        bannerImages: updatedBanners,
-      });
-      
-      await loadShopSettings();
-      setShowImageUpload(false);
-      alert('图片上传成功！');
-    } catch (error: any) {
-      console.error('上传图片失败:', error);
-      const errorMessage = error?.response?.data?.error 
-        || error?.message 
-        || error?.toString() 
-        || '未知错误';
-      alert('上传图片失败: ' + errorMessage);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveBanner = async (index: number) => {
-    if (!shopSettings) return;
-    
-    const updatedBanners = shopSettings.bannerImages.filter((_, i) => i !== index);
-    await adminApi.updateShopSettings({
-      bannerImages: updatedBanners,
-    });
-    await loadShopSettings();
+    // 默认使用本地图片
+    return '/shop-banner.jpg';
   };
 
   if (loading) {
@@ -226,89 +168,21 @@ export default function AdminShopPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sb-light-green/30 via-white to-gray-50 pb-24">
-      {/* 店铺图片 - 顶部展示（可编辑） */}
-      <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative group">
-        {shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 ? (
-          <>
-            <img
-              src={shopSettings.bannerImages[0]}
-              alt="店铺图片"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/1200x400?text=店铺图片';
-              }}
-            />
-            {/* 编辑按钮 - 悬停时显示 */}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <button
-                onClick={() => setShowImageUpload(!showImageUpload)}
-                className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold hover:bg-gray-100"
-              >
-                {showImageUpload ? '取消编辑' : '编辑图片'}
-              </button>
-            </div>
-            {/* 删除按钮 */}
-            <button
-              onClick={() => handleRemoveBanner(0)}
-              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <button
-              onClick={() => setShowImageUpload(!showImageUpload)}
-              className="px-6 py-3 bg-sb-green text-white rounded-lg font-semibold hover:bg-opacity-90"
-            >
-              上传店铺图片
-            </button>
-          </div>
-        )}
-
-        {/* 图片上传面板 */}
-        {showImageUpload && (
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-10">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">上传店铺图片</h3>
-              <label className="cursor-pointer block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                <div className={`w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-sb-green transition-colors ${
-                  uploading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}>
-                  {uploading ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-sb-green"></div>
-                      <span className="text-gray-600">上传中...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <svg className="w-6 h-6 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm text-gray-600">点击上传店铺图片</span>
-                    </>
-                  )}
-                </div>
-              </label>
-              <p className="text-xs text-gray-500 mt-2 text-center">建议尺寸：1200x400px，最大2MB</p>
-              <button
-                onClick={() => setShowImageUpload(false)}
-                className="mt-4 w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        )}
+      {/* 店铺图片 - 顶部展示（从本地读取） */}
+      <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
+        <img
+          src={getBannerImage()}
+          alt="店铺图片"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // 如果本地图片加载失败，使用占位图
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=400&fit=crop';
+          }}
+        />
+        {/* 提示信息 */}
+        <div className="absolute bottom-4 left-4 bg-black/60 text-white px-3 py-1 rounded-lg text-xs backdrop-blur-sm">
+          店铺图片：请将图片文件放在 <code className="bg-black/40 px-1 rounded">client/public/shop-banner.jpg</code>
+        </div>
       </div>
 
       {/* Header - 与用户端一致 */}
