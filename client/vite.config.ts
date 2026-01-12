@@ -27,9 +27,14 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    // 添加版本号到文件名，强制浏览器重新加载
     rollupOptions: {
       output: {
-        manualChunks: undefined
+        manualChunks: undefined,
+        // 为JS和CSS文件添加hash，确保版本更新时浏览器重新加载
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     }
   },

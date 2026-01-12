@@ -6,6 +6,7 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { setupStorageSync } from './utils/storageSync';
 import { firebaseService } from './services/firebaseService';
 import { checkFirebaseStatus } from './utils/firebaseDebug';
+import { APP_VERSION, saveVersion, hasNewVersion } from './config/version';
 
 // 初始化移动端控制台工具（Eruda）
 // 可以通过URL参数 ?debug=true 或 localStorage.setItem('eruda', 'true') 启用
@@ -29,6 +30,14 @@ if (typeof window !== 'undefined') {
 
 // Setup storage sync for Web environment
 if (typeof window !== 'undefined') {
+  // 版本检查和初始化
+  console.log(`🚀 应用启动 - 版本 ${APP_VERSION}`);
+  
+  // 如果是新版本，保存版本号（但不清除缓存，让VersionChecker处理）
+  if (!hasNewVersion()) {
+    saveVersion(APP_VERSION);
+  }
+  
   setupStorageSync();
   
   // 初始化Firebase（用于跨设备同步）

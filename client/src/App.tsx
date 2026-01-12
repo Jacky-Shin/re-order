@@ -19,6 +19,7 @@ import AdminPaymentsPage from './pages/AdminPaymentsPage';
 import AdminOrderStatsPage from './pages/AdminOrderStatsPage';
 import AdminCategoriesPage from './pages/AdminCategoriesPage';
 import AdminShopPage from './pages/AdminShopPage';
+import VersionChecker from './components/VersionChecker';
 
 // 内部组件：检测路由并设置isAdmin
 function AppRoutes() {
@@ -59,6 +60,7 @@ function App() {
   return (
     <CartProvider>
       <BrowserRouter>
+        <VersionChecker />
         <AppRoutes />
       </BrowserRouter>
     </CartProvider>
