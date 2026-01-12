@@ -517,7 +517,8 @@ class DatabaseService {
     }
     if (!this.db) throw new Error('数据库未初始化');
 
-    const result = await this.db.query('SELECT * FROM orders ORDER BY createdAt DESC');
+    // 按创建时间升序排序：先下单的排在最前面（最早的订单优先处理）
+    const result = await this.db.query('SELECT * FROM orders ORDER BY createdAt ASC');
     return (result.values || []).map(this.mapOrderFromDB);
   }
 
