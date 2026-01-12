@@ -316,6 +316,9 @@ class FirebaseService {
       };
       
       // 只添加非undefined的字段
+      if (order.orderCode !== undefined && order.orderCode !== null) {
+        orderDataRaw.orderCode = order.orderCode;
+      }
       if (order.pickupNumber !== undefined && order.pickupNumber !== null) {
         orderDataRaw.pickupNumber = order.pickupNumber;
       }
@@ -621,6 +624,7 @@ class FirebaseService {
     return {
       id: doc.id,
       orderNumber: data.orderNumber,
+      orderCode: data.orderCode || '',
       pickupNumber: data.pickupNumber,
       pickupDate: data.pickupDate,
       items: data.items,

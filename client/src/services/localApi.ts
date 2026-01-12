@@ -117,7 +117,7 @@ class LocalApiService {
   }): Promise<Order> {
     await this.initialize();
 
-    const { orderNumber, pickupNumber } = await databaseService.getNextOrderInfo();
+    const { orderNumber, orderCode, pickupNumber } = await databaseService.getNextOrderInfo();
     const today = new Date().toISOString().split('T')[0];
 
     const totalAmount = data.items.reduce((sum, item) => {
@@ -133,6 +133,7 @@ class LocalApiService {
     const order: Order = {
       id: uuidv4(),
       orderNumber,
+      orderCode,
       pickupNumber,
       pickupDate: today,
       items: data.items,

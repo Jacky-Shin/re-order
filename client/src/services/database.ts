@@ -75,6 +75,7 @@ class DatabaseService {
         CREATE TABLE IF NOT EXISTS orders (
           id TEXT PRIMARY KEY,
           orderNumber TEXT UNIQUE NOT NULL,
+          orderCode TEXT,
           pickupNumber INTEGER,
           pickupDate TEXT,
           items TEXT NOT NULL,
@@ -90,6 +91,16 @@ class DatabaseService {
           createdAt TEXT DEFAULT CURRENT_TIMESTAMP
         )
       `);
+
+      // 迁移：为现有订单添加 orderCode 字段（如果不存在）
+      try {
+        await this.db.execute('ALTER TABLE orders ADD COLUMN orderCode TEXT');
+      } catch (error: any) {
+        // 如果字段已存在，忽略错误
+        if (!error.message?.includes('duplicate column')) {
+          console.warn('添加 orderCode 字段时出错:', error);
+        }
+      }
 
       // 支付记录表
       await this.db.execute(`
@@ -590,11 +601,12 @@ class DatabaseService {
     if (!this.db) throw new Error('数据库未初始化');
 
     await this.db.run(
-      `INSERT INTO orders (id, orderNumber, pickupNumber, pickupDate, items, totalAmount, status, paymentMethod, paymentStatus, paymentId, tableNumber, customerName, phone, notifiedAt, createdAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO orders (id, orderNumber, orderCode, pickupNumber, pickupDate, items, totalAmount, status, paymentMethod, paymentStatus, paymentId, tableNumber, customerName, phone, notifiedAt, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         order.id,
         order.orderNumber,
+        order.orderCode || null,
         order.pickupNumber || null,
         order.pickupDate || null,
         JSON.stringify(order.items),
@@ -755,7 +767,7 @@ class DatabaseService {
     return updated;
   }
 
-  async getNextOrderInfo(): Promise<{ orderNumber: string; pickupNumber: number }> {
+  async getNextOrderInfo(): Promise<{ orderNumber: string; orderCode: string; pickupNumber: number }> {
     if (Capacitor.getPlatform() === 'web') {
       return this.getNextOrderInfoFromStorage();
     }
@@ -765,15 +777,22 @@ class DatabaseService {
     const counterResult = await this.db.query('SELECT * FROM order_counter LIMIT 1');
     const counter = counterResult.values?.[0] || { lastOrderNumber: 0, lastPickupNumber: 0, lastPickupDate: today };
 
-    let newOrderNumber = (counter.lastOrderNumber || 0) + 1;
+    let newOrderNumber = 1;
     let newPickupNumber = 1;
 
-    // 如果日期改变了，重置取单号
+    // 如果日期改变了，重置订单号和取单号
     if (counter.lastPickupDate !== today) {
+      newOrderNumber = 1;
       newPickupNumber = 1;
     } else {
+      newOrderNumber = (counter.lastOrderNumber || 0) + 1;
       newPickupNumber = (counter.lastPickupNumber || 0) + 1;
     }
+
+    // 生成订单编码：年月日+7位字符（数字+字母）
+    const dateStr = today.replace(/-/g, ''); // YYYYMMDD
+    const randomChars = this.generateRandomCode(7);
+    const orderCode = dateStr + randomChars;
 
     // 更新计数器
     await this.db.run(
@@ -783,8 +802,19 @@ class DatabaseService {
 
     return {
       orderNumber: newOrderNumber.toString().padStart(6, '0'),
+      orderCode: orderCode,
       pickupNumber: newPickupNumber,
     };
+  }
+
+  // 生成随机编码（数字+字母）
+  private generateRandomCode(length: number): string {
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   // ==================== 支付操作 ====================
@@ -998,6 +1028,7 @@ class DatabaseService {
     return {
       id: row.id,
       orderNumber: row.orderNumber,
+      orderCode: row.orderCode || '',
       pickupNumber: row.pickupNumber,
       pickupDate: row.pickupDate,
       items: JSON.parse(row.items),
@@ -1101,26 +1132,34 @@ class DatabaseService {
     return orders[index];
   }
 
-  private async getNextOrderInfoFromStorage(): Promise<{ orderNumber: string; pickupNumber: number }> {
+  private async getNextOrderInfoFromStorage(): Promise<{ orderNumber: string; orderCode: string; pickupNumber: number }> {
     const today = new Date().toISOString().split('T')[0];
     const lastDate = localStorage.getItem('db_last_pickup_date') || today;
     const lastOrderNumber = parseInt(localStorage.getItem('db_last_order_number') || '0');
     const lastPickupNumber = parseInt(localStorage.getItem('db_last_pickup_number') || '0');
 
-    const newOrderNumber = lastOrderNumber + 1;
+    let newOrderNumber = 1;
     let newPickupNumber = 1;
 
+    // 如果日期改变了，重置订单号和取单号
     if (lastDate === today) {
+      newOrderNumber = lastOrderNumber + 1;
       newPickupNumber = lastPickupNumber + 1;
     } else {
       localStorage.setItem('db_last_pickup_date', today);
     }
+
+    // 生成订单编码：年月日+7位字符（数字+字母）
+    const dateStr = today.replace(/-/g, ''); // YYYYMMDD
+    const randomChars = this.generateRandomCode(7);
+    const orderCode = dateStr + randomChars;
 
     localStorage.setItem('db_last_order_number', newOrderNumber.toString());
     localStorage.setItem('db_last_pickup_number', newPickupNumber.toString());
 
     return {
       orderNumber: newOrderNumber.toString().padStart(6, '0'),
+      orderCode: orderCode,
       pickupNumber: newPickupNumber,
     };
   }

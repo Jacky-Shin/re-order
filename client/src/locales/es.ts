@@ -48,6 +48,7 @@ export default {
   order: {
     title: 'Confirmar Pedido',
     orderNumber: 'Número de Pedido',
+    orderCode: 'Código de Pedido',
     pickupNumber: 'Número de Recogida',
     pickupDate: 'Fecha de Recogida',
     tableNumber: 'Mesa',
@@ -150,6 +151,11 @@ export default {
       preparingDesc: 'El chef está preparando su pedido, por favor espere',
       ready: 'Su pedido está listo',
       readyDesc: 'Su pedido ha sido completado, por favor vaya al mostrador para recoger',
+    },
+    queueInfo: {
+      yourOrder: 'Tu Número de Pedido',
+      currentPreparing: 'Preparando Actualmente',
+      aheadCount: 'Delante de Ti',
     },
   },
   // Página de escaneo
@@ -264,6 +270,7 @@ export default {
       cancelled: 'Cancelado',
       empty: 'No hay pedidos',
       orderNumber: 'Número de Pedido',
+    orderCode: 'Código de Pedido',
       pickupNumber: 'Número de Recogida',
       tableNumber: 'Mesa',
       customer: 'Cliente',
@@ -296,6 +303,7 @@ export default {
       title: 'Registros de Pago',
       empty: 'No hay registros de pago',
       orderNumber: 'Número de Pedido',
+    orderCode: 'Código de Pedido',
       method: 'Método de Pago',
       amount: 'Monto',
       status: 'Estado',

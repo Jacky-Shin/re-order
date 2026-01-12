@@ -48,6 +48,7 @@ export default {
   order: {
     title: '确认订单',
     orderNumber: '订单号',
+    orderCode: '订单编码',
     pickupNumber: '取单号',
     pickupDate: '取单日期',
     tableNumber: '桌位',
@@ -150,6 +151,11 @@ export default {
       preparingDesc: '厨师正在准备您的订单，请稍候',
       ready: '你的订单已完成',
       readyDesc: '您的订单已完成，请前往前台取餐',
+    },
+    queueInfo: {
+      yourOrder: '您的订单号',
+      currentPreparing: '当前正在制作',
+      aheadCount: '前方还有',
     },
   },
   // 扫码页面
@@ -264,6 +270,7 @@ export default {
       cancelled: '已取消',
       empty: '暂无订单',
       orderNumber: '订单号',
+    orderCode: '订单编码',
       pickupNumber: '取单号',
       tableNumber: '桌位',
       customer: '客户',
@@ -295,6 +302,7 @@ export default {
       title: '支付记录',
       empty: '暂无支付记录',
       orderNumber: '订单号',
+    orderCode: '订单编码',
       method: '支付方式',
       amount: '金额',
       status: '状态',

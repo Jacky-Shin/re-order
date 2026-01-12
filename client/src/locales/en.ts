@@ -48,6 +48,7 @@ export default {
   order: {
     title: 'Confirm Order',
     orderNumber: 'Order Number',
+    orderCode: 'Order Code',
     pickupNumber: 'Pickup Number',
     pickupDate: 'Pickup Date',
     tableNumber: 'Table',
@@ -150,6 +151,11 @@ export default {
       preparingDesc: 'The chef is preparing your order, please wait',
       ready: 'Your order is ready',
       readyDesc: 'Your order has been completed, please go to the counter to pick up',
+    },
+    queueInfo: {
+      yourOrder: 'Your Order Number',
+      currentPreparing: 'Currently Preparing',
+      aheadCount: 'Ahead of You',
     },
   },
   // Scan page
@@ -264,6 +270,7 @@ export default {
       cancelled: 'Cancelled',
       empty: 'No orders',
       orderNumber: 'Order Number',
+    orderCode: 'Order Code',
       pickupNumber: 'Pickup Number',
       tableNumber: 'Table',
       customer: 'Customer',
@@ -296,6 +303,7 @@ export default {
       title: 'Payment Records',
       empty: 'No payment records',
       orderNumber: 'Order Number',
+    orderCode: 'Order Code',
       method: 'Payment Method',
       amount: 'Amount',
       status: 'Status',

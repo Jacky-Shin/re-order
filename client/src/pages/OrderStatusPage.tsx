@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { orderApi, paymentApi } from '../api/client';
+import { orderApi, paymentApi, adminApi } from '../api/client';
 import { Order, Payment } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { onDatabaseUpdate } from '../utils/storageSync';
@@ -15,6 +15,7 @@ export default function OrderStatusPage() {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(true);
+  const [queueInfo, setQueueInfo] = useState<{ currentOrderNumber: string | null; aheadCount: number } | null>(null);
 
   useEffect(() => {
     if (orderId) {
@@ -102,6 +103,9 @@ export default function OrderStatusPage() {
         }
       }
       
+      // 加载排队信息
+      await loadQueueInfo(response.data);
+      
       // 如果订单已完成或已取消，停止轮询
       if (response.data.status === 'completed' || response.data.status === 'cancelled') {
         setPolling(false);
@@ -109,6 +113,34 @@ export default function OrderStatusPage() {
     } catch (error) {
       console.error('加载订单失败:', error);
       setLoading(false);
+    }
+  };
+
+  const loadQueueInfo = async (currentOrder: Order) => {
+    try {
+      // 获取所有待处理和制作中的订单
+      const response = await adminApi.getAllOrders();
+      const allOrders = response.data;
+      
+      // 筛选出待处理和制作中的订单，按创建时间排序
+      const pendingOrders = allOrders
+        .filter(o => o.status === 'pending' || o.status === 'preparing')
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      // 找到当前正在制作的订单（第一个 preparing 状态的订单）
+      const currentPreparingOrder = pendingOrders.find(o => o.status === 'preparing');
+      const currentOrderNumber = currentPreparingOrder?.orderNumber || null;
+      
+      // 计算前方还有多少订单
+      const currentOrderIndex = pendingOrders.findIndex(o => o.id === currentOrder.id);
+      const aheadCount = currentOrderIndex > 0 ? currentOrderIndex : 0;
+      
+      setQueueInfo({
+        currentOrderNumber,
+        aheadCount,
+      });
+    } catch (error) {
+      console.error('加载排队信息失败:', error);
     }
   };
 
@@ -127,6 +159,9 @@ export default function OrderStatusPage() {
           console.error('加载支付信息失败:', error);
         }
       }
+      
+      // 加载排队信息
+      await loadQueueInfo(response.data);
       
       // 如果订单已完成或已取消，停止轮询
       if (response.data.status === 'completed' || response.data.status === 'cancelled') {
@@ -218,7 +253,53 @@ export default function OrderStatusPage() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
-        {/* Notification Banner */}
+        {/* Order Status */}
+        <div className="card p-8 mb-6 text-center">
+          <div className={`inline-block px-6 py-3 rounded-2xl mb-6 text-lg font-bold shadow-lg ${getStatusColor(order.status)}`}>
+            {getStatusText(order.status)}
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">{t('order.orderNumber')}: <span className="bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">{order.orderNumber}</span></h2>
+          {order.orderCode && (
+            <p className="text-lg text-gray-600 mb-4">
+              {t('order.orderCode')}: <span className="font-mono font-semibold text-gray-800">{order.orderCode}</span>
+            </p>
+          )}
+          
+          {/* 排队提示 */}
+          {(order.status === 'pending' || order.status === 'preparing') && queueInfo && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+              <div className="text-sm text-blue-700 mb-2 font-medium">
+                {t('orderStatus.queueInfo.yourOrder')}: <span className="font-bold text-lg">{order.orderNumber}</span>
+              </div>
+              {queueInfo.currentOrderNumber && (
+                <div className="text-sm text-blue-700 mb-2">
+                  {t('orderStatus.queueInfo.currentPreparing')}: <span className="font-semibold">{queueInfo.currentOrderNumber}</span>
+                </div>
+              )}
+              {queueInfo.aheadCount > 0 && (
+                <div className="text-sm text-blue-700">
+                  {t('orderStatus.queueInfo.aheadCount')}: <span className="font-bold text-lg text-blue-900">{queueInfo.aheadCount}</span>
+                </div>
+              )}
+            </div>
+          )}
+          {order.pickupNumber && (
+            <div className="mb-3">
+              <p className="text-lg font-semibold text-sb-green">
+                {t('order.pickupNumber')}: <span className="text-3xl">{order.pickupNumber}</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-1">{t('orderStatus.rememberPickupNumber')}</p>
+            </div>
+          )}
+          {order.tableNumber && (
+            <div className="mb-3 p-3 bg-sb-light-green rounded-lg inline-block">
+              <p className="text-sm text-gray-600 mb-1">{t('order.tableNumber')}</p>
+              <p className="text-2xl font-bold text-sb-green">{order.tableNumber}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Notification Banner - 移到核心位置 */}
         <div className="card mb-6 overflow-hidden">
           {order.status === 'pending' && (
             <div className="flex items-center gap-4 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-400">
@@ -255,28 +336,7 @@ export default function OrderStatusPage() {
           )}
         </div>
 
-        {/* Order Status */}
-        <div className="card p-8 mb-6 text-center">
-          <div className={`inline-block px-6 py-3 rounded-2xl mb-6 text-lg font-bold shadow-lg ${getStatusColor(order.status)}`}>
-            {getStatusText(order.status)}
-          </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('order.orderNumber')}: <span className="bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">{order.orderNumber}</span></h2>
-          {order.pickupNumber && (
-            <div className="mb-3">
-              <p className="text-lg font-semibold text-sb-green">
-                {t('order.pickupNumber')}: <span className="text-3xl">{order.pickupNumber}</span>
-              </p>
-              <p className="text-xs text-gray-500 mt-1">{t('orderStatus.rememberPickupNumber')}</p>
-            </div>
-          )}
-          {order.tableNumber && (
-            <div className="mb-3 p-3 bg-sb-light-green rounded-lg inline-block">
-              <p className="text-sm text-gray-600 mb-1">{t('order.tableNumber')}</p>
-              <p className="text-2xl font-bold text-sb-green">{order.tableNumber}</p>
-            </div>
-          )}
-          
-          {/* 订单准备通知 */}
+        {/* 订单准备通知 */}
           {order.status === 'ready' && order.notifiedAt && (
             <div className={`mb-4 mt-4 p-4 rounded-lg border-2 animate-pulse ${
               order.paymentMethod === 'cash' && order.paymentStatus === 'pending'

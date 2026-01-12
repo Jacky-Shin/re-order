@@ -255,18 +255,15 @@ export default function AdminOrdersPage() {
                 {order.status !== 'completed' && order.status !== 'cancelled' && (
                   <div className="border-t pt-4">
                     <div className="flex gap-2 flex-wrap">
-                      {order.status === 'pending' && (
-                        <button
-                          onClick={() => handleStatusChange(order.id, 'preparing')}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                          {t('admin.orders.startPreparing')}
-                        </button>
-                      )}
-                      {order.status === 'preparing' && (
+                      {/* 去掉开始制作步骤，pending 状态直接可以通知客户取餐 */}
+                      {(order.status === 'pending' || order.status === 'preparing') && (
                         <button
                           onClick={async () => {
                             try {
+                              // 如果订单是 pending 状态，先更新为 preparing，然后通知客户
+                              if (order.status === 'pending') {
+                                await handleStatusChange(order.id, 'preparing');
+                              }
                               console.log('📢 通知客户取餐...', { orderId: order.id });
                               const response = await adminApi.notifyCustomer(order.id);
                               console.log('✅ 通知客户成功:', response);

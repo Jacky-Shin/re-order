@@ -5,6 +5,7 @@ import { PaymentMethod, Order } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import StripePaymentForm from '../components/StripePaymentForm';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { printOrder } from '../utils/printOrder';
 
 export default function PaymentPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -53,7 +54,14 @@ export default function PaymentPage() {
         });
 
         if (response.data.success) {
+          // 付款成功后自动打印小票
           if (order) {
+            try {
+              await printOrder(order, response.data.payment);
+            } catch (printError) {
+              console.error('打印小票失败:', printError);
+              // 打印失败不影响流程，继续执行
+            }
             navigate(`/order-status/${order.id}`);
           }
         } else {
@@ -109,7 +117,14 @@ export default function PaymentPage() {
           }
         }
         
+        // 付款成功后自动打印小票
         if (order) {
+          try {
+            await printOrder(order, response.data.payment);
+          } catch (printError) {
+            console.error('打印小票失败:', printError);
+            // 打印失败不影响流程，继续执行
+          }
           navigate(`/order-status/${order.id}`);
         }
       } else {
