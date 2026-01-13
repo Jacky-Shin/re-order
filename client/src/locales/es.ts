@@ -167,6 +167,19 @@ export default {
       aheadCount: 'Delante de Ti',
     },
   },
+  // Página de inicio / Login
+  home: {
+    title: 'Registrarse / Iniciar Sesión',
+    subtitle: 'Por favor ingrese su información para continuar',
+    phone: 'Número de Teléfono',
+    phonePlaceholder: 'Ingrese su número de teléfono',
+    name: 'Nombre',
+    namePlaceholder: 'Ingrese su nombre',
+    rememberMe: 'Recordar mi información',
+    continue: 'Continuar',
+    terms: 'Al continuar, acepta nuestros términos de servicio',
+    loginFailed: 'Error al iniciar sesión, por favor intente nuevamente',
+  },
   // Página de escaneo
   scan: {
     title: 'Starbucks',

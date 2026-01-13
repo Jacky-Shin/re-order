@@ -12,17 +12,32 @@ export default function HomePage() {
   const { t } = useLanguage();
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shopSettings, setShopSettings] = useState<ShopSettings | null>(null);
 
   useEffect(() => {
     loadShopSettings();
+    // 加载记住的账号密码
+    loadRememberedCredentials();
     // 如果已登录，自动跳转到菜单页
     if (isAuthenticated) {
       navigate('/menu');
     }
   }, [isAuthenticated, navigate]);
+
+  const loadRememberedCredentials = () => {
+    const rememberedPhone = localStorage.getItem('remembered_phone');
+    const rememberedName = localStorage.getItem('remembered_name');
+    const shouldRemember = localStorage.getItem('remember_me') === 'true';
+    
+    if (shouldRemember && rememberedPhone && rememberedName) {
+      setPhone(rememberedPhone);
+      setName(rememberedName);
+      setRememberMe(true);
+    }
+  };
 
   const loadShopSettings = async () => {
     try {
@@ -40,10 +55,22 @@ export default function HomePage() {
 
     try {
       await login(phone, name);
+      
+      // 处理记住账号密码
+      if (rememberMe) {
+        localStorage.setItem('remembered_phone', phone);
+        localStorage.setItem('remembered_name', name);
+        localStorage.setItem('remember_me', 'true');
+      } else {
+        localStorage.removeItem('remembered_phone');
+        localStorage.removeItem('remembered_name');
+        localStorage.removeItem('remember_me');
+      }
+      
       // 登录成功后跳转到菜单页
       navigate('/menu');
     } catch (err: any) {
-      setError(err.message || '登录失败，请重试');
+      setError(err.message || t('home.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -83,28 +110,43 @@ export default function HomePage() {
       </div>
 
       {/* 店铺图片 */}
-      {shopSettings?.bannerImages?.[0] && (
-        <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative">
+      <div className="w-full h-48 md:h-64 lg:h-80 overflow-hidden relative bg-gradient-to-br from-sb-light-green/50 to-sb-green/30">
+        {shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 && shopSettings.bannerImages[0] ? (
           <img
             src={shopSettings.bannerImages[0]}
-            alt={shopSettings.name}
+            alt={shopSettings.name || t('menu.title')}
             className="w-full h-full object-cover"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = '/shop-banner.jpg';
+              console.error('店铺图片加载失败:', shopSettings.bannerImages[0]);
+              // 图片加载失败时隐藏图片，显示占位符
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+              // 显示占位符
+              const placeholder = img.parentElement?.querySelector('.placeholder') as HTMLElement;
+              if (placeholder) {
+                placeholder.style.display = 'flex';
+              }
             }}
           />
+        ) : null}
+        {/* 占位符 - 当没有图片或图片加载失败时显示 */}
+        <div className={`absolute inset-0 flex items-center justify-center ${shopSettings?.bannerImages && shopSettings.bannerImages.length > 0 && shopSettings.bannerImages[0] ? 'hidden placeholder' : ''}`}>
+          <div className="text-center">
+            <div className="text-6xl mb-4">☕</div>
+            <p className="text-gray-600 font-medium">{shopSettings?.name || t('menu.title')}</p>
+          </div>
         </div>
-      )}
+      </div>
 
       {/* 登录表单 */}
       <div className="max-w-md mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Registrarse / Iniciar Sesión
+              {t('home.title')}
             </h2>
             <p className="text-gray-600 text-sm">
-              Por favor ingrese su información para continuar
+              {t('home.subtitle')}
             </p>
           </div>
 
@@ -117,30 +159,43 @@ export default function HomePage() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Número de Teléfono <span className="text-red-500">*</span>
+                {t('home.phone')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
                 required
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="Ingrese su número de teléfono"
+                placeholder={t('home.phonePlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre <span className="text-red-500">*</span>
+                {t('home.name')} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ingrese su nombre"
+                placeholder={t('home.namePlaceholder')}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sb-green focus:border-transparent"
               />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-sb-green border-gray-300 rounded focus:ring-sb-green"
+              />
+              <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
+                {t('home.rememberMe')}
+              </label>
             </div>
 
             <button
@@ -150,12 +205,12 @@ export default function HomePage() {
                 loading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {loading ? 'Procesando...' : 'Continuar'}
+              {loading ? t('common.processing') : t('home.continue')}
             </button>
           </form>
 
           <p className="mt-6 text-xs text-center text-gray-500">
-            Al continuar, acepta nuestros términos de servicio
+            {t('home.terms')}
           </p>
         </div>
       </div>
