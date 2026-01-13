@@ -1109,6 +1109,12 @@ class DatabaseService {
     const orders = await this.getOrdersFromStorage();
     orders.push(order);
     localStorage.setItem('db_orders', JSON.stringify(orders));
+    // 手动触发自定义事件，确保监听器能够捕获到
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('database-update', { 
+        detail: { key: 'db_orders' } 
+      }));
+    }
     return order;
   }
 
@@ -1121,13 +1127,10 @@ class DatabaseService {
     }
     orders[index] = { ...orders[index], ...updates };
     localStorage.setItem('db_orders', JSON.stringify(orders));
-    // 触发存储更新事件（用于跨标签页同步）
+    // 触发自定义事件，确保监听器能够捕获到
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'db_orders',
-        newValue: localStorage.getItem('db_orders'),
-        url: window.location.href,
-        storageArea: localStorage,
+      window.dispatchEvent(new CustomEvent('database-update', { 
+        detail: { key: 'db_orders' } 
       }));
     }
     return orders[index];

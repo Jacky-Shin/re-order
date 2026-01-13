@@ -21,10 +21,12 @@ export default function AdminOrdersPage() {
   // 监听数据库更新事件（当用户下单时自动刷新）
   useEffect(() => {
     const unsubscribes: (() => void)[] = [];
+    let pollInterval: NodeJS.Timeout | null = null;
     
     // localStorage同步
     const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
       if (key === 'db_orders') {
+        console.log('🔄 检测到订单数据更新，刷新订单列表...');
         loadOrders();
       }
     });
@@ -32,19 +34,32 @@ export default function AdminOrdersPage() {
     
     // Firebase实时同步
     if (firebaseService.isAvailable()) {
-      const firebaseUnsubscribe = firebaseService.onOrdersChange(() => {
+      const firebaseUnsubscribe = firebaseService.onOrdersChange((orders) => {
+        console.log('🔄 Firebase订单变化，刷新订单列表...', orders.length);
         loadOrders();
       });
       unsubscribes.push(firebaseUnsubscribe);
     }
     
+    // 添加轮询机制作为备用（每5秒检查一次新订单）
+    // 这样可以确保即使监听机制失效，也能检测到新订单
+    pollInterval = setInterval(() => {
+      loadOrders().catch(err => {
+        console.warn('轮询检查订单失败:', err);
+      });
+    }, 5000); // 每5秒轮询一次
+    
     return () => {
       unsubscribes.forEach(unsub => unsub());
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
     };
-  }, []);
+  }, []); // 移除 orders.length 依赖，避免无限循环
 
   const loadOrders = async () => {
     try {
+      const previousOrderCount = orders.length;
       setLoading(true);
       // 添加超时处理，避免长时间等待
       const { withTimeout } = await import('../utils/errorHandler');
@@ -62,9 +77,19 @@ export default function AdminOrdersPage() {
         .slice(0, maxOrders);
       
       setOrders(sortedOrders);
+      
+      // 如果订单数量增加，说明有新订单
+      if (sortedOrders.length > previousOrderCount) {
+        const newOrdersCount = sortedOrders.length - previousOrderCount;
+        console.log(`🆕 检测到 ${newOrdersCount} 个新订单，已自动刷新`);
+        // 可以在这里添加通知或提示
+      }
     } catch (error: any) {
       console.error('加载订单失败:', error);
-      alert(error.message || '加载订单失败，请刷新页面重试');
+      // 轮询时静默失败，避免频繁弹窗
+      if (!error.message?.includes('轮询')) {
+        alert(error.message || '加载订单失败，请刷新页面重试');
+      }
     } finally {
       setLoading(false);
     }
