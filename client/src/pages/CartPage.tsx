@@ -159,8 +159,8 @@ export default function CartPage() {
         ))}
       </div>
 
-      {/* Bottom Bar - 高级设计 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-2xl">
+      {/* Bottom Bar - 高级设计（上移以避免被底部导航遮挡） */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-2xl">
         <div className="max-w-2xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between mb-4">
             <div>

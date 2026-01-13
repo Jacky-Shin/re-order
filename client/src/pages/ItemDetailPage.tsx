@@ -271,8 +271,8 @@ export default function ItemDetailPage() {
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+      {/* Bottom Bar - 上移以避免被底部导航遮挡 */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <div className="text-sm text-gray-500">总计</div>

@@ -20,11 +20,12 @@ orderRouter.post('/', async (req: Request, res: Response) => {
     }, 0);
     
     // 获取下一个订单号和取单号
-    const { orderNumber, pickupNumber, pickupDate } = await getNextOrderInfo();
+    const { orderNumber, orderCode, pickupNumber, pickupDate } = await getNextOrderInfo();
     
     const order: Order = {
       id: uuidv4(),
       orderNumber,
+      orderCode,
       pickupNumber,
       pickupDate,
       items,

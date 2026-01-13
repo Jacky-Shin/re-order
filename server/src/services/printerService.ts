@@ -1,5 +1,11 @@
-import { Printer, PrinterTypes } from 'node-thermal-printer';
+import { createRequire } from 'module';
 import { Order, Payment } from '../types.js';
+
+// node-thermal-printer 是 CommonJS 模块，需要使用 createRequire 导入
+const require = createRequire(import.meta.url);
+const thermalPrinter = require('node-thermal-printer');
+const Printer = thermalPrinter.printer || thermalPrinter.ThermalPrinter;
+const PrinterTypes = thermalPrinter.types || thermalPrinter.PrinterTypes;
 
 // 打印机配置（从环境变量读取，或使用默认值）
 const PRINTER_IP = process.env.PRINTER_IP || '192.168.1.100';
@@ -9,7 +15,7 @@ const PRINTER_TYPE = process.env.PRINTER_TYPE || 'EPSON'; // EPSON, STAR, EPOS
 /**
  * 初始化打印机
  */
-function createPrinter(): Printer {
+function createPrinter(): InstanceType<typeof Printer> {
   const printerType = PRINTER_TYPE as keyof typeof PrinterTypes;
   
   const printer = new Printer({

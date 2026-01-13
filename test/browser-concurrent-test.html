@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>并发订单测试 - 浏览器版</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .config {
+      background: #f9f9f9;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .config label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .config input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .results {
+      margin-top: 24px;
+    }
+    .stat {
+      display: inline-block;
+      margin: 10px 20px 10px 0;
+      padding: 12px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      min-width: 150px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    .stat.success { background: #d4edda; }
+    .stat.error { background: #f8d7da; }
+    .stat.warning { background: #fff3cd; }
+    .log {
+      margin-top: 20px;
+      padding: 16px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+    .log-item {
+      margin-bottom: 4px;
+      padding: 4px;
+    }
+    .log-item.error { color: #dc3545; }
+    .log-item.success { color: #28a745; }
+    .log-item.info { color: #007bff; }
+    .progress {
+      margin-top: 20px;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #007bff;
+      transition: width 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 并发订单测试工具</h1>
+    
+    <div class="config">
+      <label>并发用户数:</label>
+      <input type="number" id="concurrentUsers" value="30" min="1" max="100">
+      
+      <label>测试模式:</label>
+      <select id="testMode" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px;">
+        <option value="localStorage">本地模式 (localStorage)</option>
+        <option value="api">API模式 (需要启动服务器)</option>
+      </select>
+      
+      <label>API地址 (仅API模式):</label>
+      <input type="text" id="apiUrl" value="http://localhost:5000" placeholder="http://localhost:5000">
+      
+      <button id="startTest" onclick="startTest()">开始测试</button>
+      <button id="clearResults" onclick="clearResults()">清除结果</button>
+    </div>
+
+    <div class="results" id="results" style="display: none;">
+      <h2>测试结果</h2>
+      <div class="progress">
+        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+      </div>
+      <div id="stats"></div>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // 导入localApi服务（需要根据实际路径调整）
+    // 注意：这里需要确保可以访问到localApi模块
+    
+    let testResults = {
+      total: 0,
+      success: 0,
+      failed: 0,
+      orderNumbers: new Set(),
+      pickupNumbers: new Set(),
+      orderCodes: new Set(),
+      duplicates: {
+        orderNumbers: [],
+        pickupNumbers: [],
+        orderCodes: [],
+      },
+      errors: [],
+      responseTimes: [],
+    };
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      item.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(item);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function updateStats() {
+      const statsDiv = document.getElementById('stats');
+      const successRate = testResults.total > 0 
+        ? ((testResults.success / testResults.total) * 100).toFixed(2)
+        : 0;
+      const avgResponseTime = testResults.responseTimes.length > 0
+        ? (testResults.responseTimes.reduce((a, b) => a + b, 0) / testResults.responseTimes.length).toFixed(2)
+        : 0;
+
+      statsDiv.innerHTML = `
+        <div class="stat ${testResults.success === testResults.total ? 'success' : ''}">
+          <div class="stat-label">总请求数</div>
+          <div class="stat-value">${testResults.total}</div>
+        </div>
+        <div class="stat success">
+          <div class="stat-label">成功</div>
+          <div class="stat-value">${testResults.success}</div>
+        </div>
+        <div class="stat error">
+          <div class="stat-label">失败</div>
+          <div class="stat-value">${testResults.failed}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">成功率</div>
+          <div class="stat-value">${successRate}%</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">平均响应时间</div>
+          <div class="stat-value">${avgResponseTime}ms</div>
+        </div>
+        <div class="stat ${testResults.duplicates.orderNumbers.length > 0 ? 'error' : 'success'}">
+          <div class="stat-label">订单号重复</div>
+          <div class="stat-value">${testResults.duplicates.orderNumbers.length}</div>
+        </div>
+        <div class="stat ${testResults.duplicates.pickupNumbers.length > 0 ? 'error' : 'success'}">
+          <div class="stat-label">取单号重复</div>
+          <div class="stat-value">${testResults.duplicates.pickupNumbers.length}</div>
+        </div>
+        <div class="stat ${testResults.duplicates.orderCodes.length > 0 ? 'error' : 'success'}">
+          <div class="stat-label">订单编码重复</div>
+          <div class="stat-value">${testResults.duplicates.orderCodes.length}</div>
+        </div>
+      `;
+    }
+
+    async function simulateOrderLocalStorage(userId) {
+      const startTime = performance.now();
+      
+      try {
+        // 动态导入localApi（需要根据实际路径调整）
+        // 这里假设可以通过某种方式访问到localApi
+        // 实际使用时可能需要调整导入路径
+        
+        // 模拟订单数据
+        const mockCartItem = {
+          id: `test_item_${Date.now()}_${userId}`,
+          menuItemId: 'test_menu_item_1',
+          name: '测试商品',
+          price: 25.50,
+          quantity: 1,
+          image: 'https://via.placeholder.com/100',
+        };
+
+        // 尝试使用localApi创建订单
+        // 注意：这需要在浏览器环境中运行，并且可以访问到localApi模块
+        const { orderApi } = await import('../client/src/api/client.js');
+        
+        const response = await orderApi.create({
+          items: [mockCartItem],
+          customerName: `测试用户${userId}`,
+          phone: `1380000${String(userId).padStart(4, '0')}`,
+          tableNumber: `T${userId}`,
+        });
+
+        const endTime = performance.now();
+        const responseTime = endTime - startTime;
+        
+        testResults.responseTimes.push(responseTime);
+        testResults.total++;
+        testResults.success++;
+
+        const order = response.data || response;
+        
+        // 检查重复
+        if (testResults.orderNumbers.has(order.orderNumber)) {
+          testResults.duplicates.orderNumbers.push({
+            userId,
+            orderNumber: order.orderNumber,
+            orderId: order.id,
+          });
+        } else {
+          testResults.orderNumbers.add(order.orderNumber);
+        }
+
+        if (order.pickupNumber !== undefined) {
+          const pickupKey = `${order.pickupDate}_${order.pickupNumber}`;
+          if (testResults.pickupNumbers.has(pickupKey)) {
+            testResults.duplicates.pickupNumbers.push({
+              userId,
+              pickupNumber: order.pickupNumber,
+              pickupDate: order.pickupDate,
+              orderId: order.id,
+            });
+          } else {
+            testResults.pickupNumbers.add(pickupKey);
+          }
+        }
+
+        if (order.orderCode) {
+          if (testResults.orderCodes.has(order.orderCode)) {
+            testResults.duplicates.orderCodes.push({
+              userId,
+              orderCode: order.orderCode,
+              orderId: order.id,
+            });
+          } else {
+            testResults.orderCodes.add(order.orderCode);
+          }
+        }
+
+        log(`用户${userId}: 订单创建成功 - 订单号: ${order.orderNumber}, 取单号: ${order.pickupNumber}`, 'success');
+        return { success: true, userId, order, responseTime };
+      } catch (error) {
+        const endTime = performance.now();
+        const responseTime = endTime - startTime;
+        
+        testResults.total++;
+        testResults.failed++;
+        testResults.responseTimes.push(responseTime);
+        testResults.errors.push({ userId, error: error.message, responseTime });
+        
+        log(`用户${userId}: 订单创建失败 - ${error.message}`, 'error');
+        return { success: false, userId, error: error.message };
+      }
+    }
+
+    async function simulateOrderAPI(userId, apiUrl) {
+      const startTime = performance.now();
+      
+      try {
+        const mockCartItem = {
+          id: `test_item_${Date.now()}_${userId}`,
+          menuItemId: 'test_menu_item_1',
+          name: '测试商品',
+          price: 25.50,
+          quantity: 1,
+          image: 'https://via.placeholder.com/100',
+        };
+
+        const response = await fetch(`${apiUrl}/api/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: [mockCartItem],
+            customerName: `测试用户${userId}`,
+            phone: `1380000${String(userId).padStart(4, '0')}`,
+            tableNumber: `T${userId}`,
+          }),
+        });
+
+        const endTime = performance.now();
+        const responseTime = endTime - startTime;
+        
+        testResults.responseTimes.push(responseTime);
+        testResults.total++;
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        }
+
+        const order = await response.json();
+        testResults.success++;
+
+        // 检查重复（同localStorage模式）
+        if (testResults.orderNumbers.has(order.orderNumber)) {
+          testResults.duplicates.orderNumbers.push({
+            userId,
+            orderNumber: order.orderNumber,
+            orderId: order.id,
+          });
+        } else {
+          testResults.orderNumbers.add(order.orderNumber);
+        }
+
+        if (order.pickupNumber !== undefined) {
+          const pickupKey = `${order.pickupDate}_${order.pickupNumber}`;
+          if (testResults.pickupNumbers.has(pickupKey)) {
+            testResults.duplicates.pickupNumbers.push({
+              userId,
+              pickupNumber: order.pickupNumber,
+              pickupDate: order.pickupDate,
+              orderId: order.id,
+            });
+          } else {
+            testResults.pickupNumbers.add(pickupKey);
+          }
+        }
+
+        if (order.orderCode) {
+          if (testResults.orderCodes.has(order.orderCode)) {
+            testResults.duplicates.orderCodes.push({
+              userId,
+              orderCode: order.orderCode,
+              orderId: order.id,
+            });
+          } else {
+            testResults.orderCodes.add(order.orderCode);
+          }
+        }
+
+        log(`用户${userId}: 订单创建成功 - 订单号: ${order.orderNumber}, 取单号: ${order.pickupNumber}`, 'success');
+        return { success: true, userId, order, responseTime };
+      } catch (error) {
+        const endTime = performance.now();
+        const responseTime = endTime - startTime;
+        
+        testResults.total++;
+        testResults.failed++;
+        testResults.responseTimes.push(responseTime);
+        testResults.errors.push({ userId, error: error.message, responseTime });
+        
+        log(`用户${userId}: 订单创建失败 - ${error.message}`, 'error');
+        return { success: false, userId, error: error.message };
+      }
+    }
+
+    async function startTest() {
+      const concurrentUsers = parseInt(document.getElementById('concurrentUsers').value);
+      const testMode = document.getElementById('testMode').value;
+      const apiUrl = document.getElementById('apiUrl').value;
+      
+      // 重置结果
+      testResults = {
+        total: 0,
+        success: 0,
+        failed: 0,
+        orderNumbers: new Set(),
+        pickupNumbers: new Set(),
+        orderCodes: new Set(),
+        duplicates: {
+          orderNumbers: [],
+          pickupNumbers: [],
+          orderCodes: [],
+        },
+        errors: [],
+        responseTimes: [],
+      };
+
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('log').innerHTML = '';
+      document.getElementById('startTest').disabled = true;
+      
+      log(`开始测试: ${concurrentUsers}个并发用户, 模式: ${testMode}`, 'info');
+      
+      const promises = [];
+      const startTime = performance.now();
+      
+      for (let i = 1; i <= concurrentUsers; i++) {
+        if (testMode === 'localStorage') {
+          promises.push(simulateOrderLocalStorage(i));
+        } else {
+          promises.push(simulateOrderAPI(i, apiUrl));
+        }
+        
+        // 更新进度
+        const progress = (i / concurrentUsers) * 100;
+        document.getElementById('progressBar').style.width = `${progress}%`;
+        updateStats();
+      }
+
+      await Promise.allSettled(promises);
+      
+      const endTime = performance.now();
+      const totalTime = endTime - startTime;
+      
+      log(`测试完成! 总耗时: ${totalTime.toFixed(2)}ms`, 'info');
+      log(`QPS: ${((testResults.total / totalTime) * 1000).toFixed(2)}`, 'info');
+      
+      if (testResults.duplicates.orderNumbers.length > 0) {
+        log(`⚠️ 发现 ${testResults.duplicates.orderNumbers.length} 个重复的订单号!`, 'error');
+      }
+      if (testResults.duplicates.pickupNumbers.length > 0) {
+        log(`⚠️ 发现 ${testResults.duplicates.pickupNumbers.length} 个重复的取单号!`, 'error');
+      }
+      if (testResults.duplicates.orderCodes.length > 0) {
+        log(`⚠️ 发现 ${testResults.duplicates.orderCodes.length} 个重复的订单编码!`, 'error');
+      }
+      
+      document.getElementById('progressBar').style.width = '100%';
+      updateStats();
+      document.getElementById('startTest').disabled = false;
+    }
+
+    function clearResults() {
+      testResults = {
+        total: 0,
+        success: 0,
+        failed: 0,
+        orderNumbers: new Set(),
+        pickupNumbers: new Set(),
+        orderCodes: new Set(),
+        duplicates: {
+          orderNumbers: [],
+          pickupNumbers: [],
+          orderCodes: [],
+        },
+        errors: [],
+        responseTimes: [],
+      };
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('log').innerHTML = '';
+    }
+
+    // 导出到全局作用域
+    window.startTest = startTest;
+    window.clearResults = clearResults;
+  </script>
+</body>
+</html>
+
