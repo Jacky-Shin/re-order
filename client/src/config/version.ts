@@ -3,7 +3,7 @@
  * 每次发布新版本时，更新此版本号
  * 版本号格式：主版本号.次版本号.修订号 (例如: 1.0.0)
  */
-export const APP_VERSION = '1.0.5';
+export const APP_VERSION = '1.0.6';
 
 /**
  * 版本存储键名
