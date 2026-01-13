@@ -144,7 +144,14 @@ export default function MyOrdersPage() {
                       </p>
                     )}
                     <p className="text-sm text-gray-500">
-                      {new Date(order.createdAt).toLocaleString()}
+                      {new Date(order.createdAt).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}
                     </p>
                   </div>
                 </div>

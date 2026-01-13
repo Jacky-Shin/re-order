@@ -528,7 +528,14 @@ export default function OrderStatusPage() {
                   ? 'text-yellow-600'
                   : 'text-green-600'
               }`}>
-                {t('order.readyNotification.notifiedAt')}: {new Date(order.notifiedAt).toLocaleString()}
+                {t('order.readyNotification.notifiedAt')}: {new Date(order.notifiedAt).toLocaleString('es-ES', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })}
               </p>
             </div>
           )}
@@ -635,7 +642,14 @@ export default function OrderStatusPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-600">{t('orderStatus.paidAt')}</span>
                   <span className="text-gray-700">
-                    {new Date(payment.paidAt).toLocaleString()}
+                    {new Date(payment.paidAt).toLocaleString('es-ES', {
+                      year: 'numeric',
+                      month: 'numeric',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit'
+                    })}
                   </span>
                 </div>
               )}

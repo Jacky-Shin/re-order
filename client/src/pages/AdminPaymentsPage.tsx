@@ -135,8 +135,22 @@ export default function AdminPaymentsPage() {
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-500">
                           {payment.paidAt 
-                            ? new Date(payment.paidAt).toLocaleString('zh-CN')
-                            : new Date(payment.createdAt).toLocaleString('zh-CN')}
+                            ? new Date(payment.paidAt).toLocaleString('es-ES', {
+                                year: 'numeric',
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })
+                            : new Date(payment.createdAt).toLocaleString('es-ES', {
+                                year: 'numeric',
+                                month: 'numeric',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })}
                         </div>
                       </td>
                     </tr>

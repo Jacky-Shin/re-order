@@ -224,7 +224,14 @@ export default function AdminOrdersPage() {
                       )}
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
-                      <p>{t('admin.orders.createdAt')}: {new Date(order.createdAt).toLocaleString()}</p>
+                      <p>{t('admin.orders.createdAt')}: {new Date(order.createdAt).toLocaleString('es-ES', {
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                      })}</p>
                       {order.pickupDate && (
                         <p>{t('admin.orders.pickupDate')}: {order.pickupDate}</p>
                       )}
@@ -302,7 +309,7 @@ export default function AdminOrdersPage() {
                         <>
                           {order.notifiedAt && (
                             <span className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm flex items-center">
-                              ✓ {t('admin.orders.notified')} ({new Date(order.notifiedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })})
+                              ✓ {t('admin.orders.notified')} ({new Date(order.notifiedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })})
                             </span>
                           )}
                           <button
