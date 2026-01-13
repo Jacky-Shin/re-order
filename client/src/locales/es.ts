@@ -133,8 +133,6 @@ export default {
   },
   // Estado del pedido
   orderStatus: {
-    name: 'Nombre',
-    phone: 'Teléfono',
     title: 'Estado del Pedido',
     rememberPickupNumber: 'Por favor, recuerde su número de recogida',
     contactInfo: 'Información de Contacto',
@@ -318,7 +316,7 @@ export default {
       cancelled: 'Cancelado',
       empty: 'No hay pedidos',
       orderNumber: 'Número de Pedido',
-    orderCode: 'Código de Pedido',
+      orderCode: 'Código de Pedido',
       pickupNumber: 'Número de Recogida',
       tableNumber: 'Mesa',
       customer: 'Cliente',
@@ -351,7 +349,7 @@ export default {
       title: 'Registros de Pago',
       empty: 'No hay registros de pago',
       orderNumber: 'Número de Pedido',
-    orderCode: 'Código de Pedido',
+      orderCode: 'Código de Pedido',
       method: 'Método de Pago',
       amount: 'Monto',
       status: 'Estado',
