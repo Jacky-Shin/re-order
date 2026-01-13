@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Version Check</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #d1ecf1; color: #0c5460; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Version Check Tool</h1>
+  
+  <div id="results"></div>
+  
+  <script type="module">
+    const results = document.getElementById('results');
+    
+    async function checkVersion() {
+      try {
+        // Check localStorage version
+        const storedVersion = localStorage.getItem('app_version');
+        results.innerHTML += `<div class="status info">
+          <strong>Stored Version:</strong> <code>${storedVersion || 'Not set'}</code>
+        </div>`;
+        
+        // Check if main.js exists and get its hash
+        const response = await fetch('/assets/index-B-6EGXK1.js', { method: 'HEAD' });
+        const jsHash = response.ok ? 'index-B-6EGXK1.js (Latest)' : 'Not found';
+        results.innerHTML += `<div class="status ${response.ok ? 'success' : 'error'}">
+          <strong>Main JS File:</strong> <code>${jsHash}</code>
+        </div>`;
+        
+        // Check Service Worker
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          results.innerHTML += `<div class="status info">
+            <strong>Service Workers:</strong> <code>${registrations.length} registered</code>
+          </div>`;
+          
+          if (registrations.length > 0) {
+            results.innerHTML += `<div class="status info">
+              <button onclick="unregisterSW()">Unregister Service Workers</button>
+            </div>`;
+          }
+        }
+        
+        // Check cache
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          results.innerHTML += `<div class="status info">
+            <strong>Caches:</strong> <code>${cacheNames.length} found</code>
+          </div>`;
+          
+          if (cacheNames.length > 0) {
+            results.innerHTML += `<div class="status info">
+              <button onclick="clearCaches()">Clear All Caches</button>
+            </div>`;
+          }
+        }
+        
+        // Check translations
+        try {
+          const translations = await import('/src/locales/es.js');
+          const searchPlaceholder = translations.default?.menu?.searchPlaceholder;
+          results.innerHTML += `<div class="status ${searchPlaceholder === 'Buscar productos...' ? 'success' : 'error'}">
+            <strong>Search Placeholder:</strong> <code>${searchPlaceholder || 'Not found'}</code>
+          </div>`;
+        } catch (e) {
+          results.innerHTML += `<div class="status error">
+            <strong>Translation Check:</strong> <code>Error: ${e.message}</code>
+          </div>`;
+        }
+        
+      } catch (error) {
+        results.innerHTML += `<div class="status error">
+          <strong>Error:</strong> <code>${error.message}</code>
+        </div>`;
+      }
+    }
+    
+    window.unregisterSW = async function() {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        alert('Service Workers unregistered! Please refresh the page.');
+      }
+    };
+    
+    window.clearCaches = async function() {
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+        }
+        alert('All caches cleared! Please refresh the page.');
+      }
+    };
+    
+    checkVersion();
+  </script>
+</body>
+</html>
+
