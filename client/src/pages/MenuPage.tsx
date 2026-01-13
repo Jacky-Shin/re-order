@@ -206,7 +206,7 @@ export default function MenuPage() {
         <div className="relative">
           <input
             type="text"
-            placeholder="搜索商品..."
+            placeholder={t('menu.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-3 pl-12 rounded-xl border-2 border-gray-200 focus:border-sb-green focus:ring-2 focus:ring-sb-green/20 transition-all"
@@ -293,8 +293,8 @@ export default function MenuPage() {
                   <h3 className="font-bold text-gray-900 mb-1 text-base md:text-lg leading-tight">{item.name}</h3>
                   <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                      ¥{item.price.toFixed(2)}
+                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent min-w-[80px] text-right">
+                      ${item.price.toFixed(2)}
                     </p>
                     {item.available && (
                       <div className="w-8 h-8 bg-sb-green/10 rounded-full flex items-center justify-center group-hover:bg-sb-green group-hover:scale-110 transition-all duration-300">
@@ -309,7 +309,7 @@ export default function MenuPage() {
             ))}
             {menuItems.length === 0 && (
               <div className="col-span-full text-center py-12">
-                <p className="text-gray-500">未找到相关商品</p>
+                <p className="text-gray-500">{t('menu.noResults')}</p>
               </div>
             )}
           </div>
@@ -350,8 +350,8 @@ export default function MenuPage() {
                   <h3 className="font-bold text-gray-900 mb-1 text-base md:text-lg leading-tight">{item.name}</h3>
                   <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                      ¥{item.price.toFixed(2)}
+                    <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent min-w-[80px] text-right">
+                      ${item.price.toFixed(2)}
                     </p>
                     {item.available && (
                       <div className="w-8 h-8 bg-sb-green/10 rounded-full flex items-center justify-center group-hover:bg-sb-green group-hover:scale-110 transition-all duration-300">

@@ -31,6 +31,15 @@ export default {
     admin: 'Panel de Administración',
     items: 'artículos',
     soldOut: 'Agotado',
+    searchPlaceholder: 'Buscar productos...',
+    noResults: 'No se encontraron productos',
+    backToMenu: 'Volver al Menú',
+  },
+  // Detalles del producto
+  item: {
+    selectSize: 'Seleccionar Tamaño',
+    quantity: 'Cantidad',
+    notFound: 'Producto no encontrado',
   },
   // Carrito de compras
   cart: {
@@ -124,6 +133,8 @@ export default {
   },
   // Estado del pedido
   orderStatus: {
+    name: 'Nombre',
+    phone: 'Teléfono',
     title: 'Estado del Pedido',
     rememberPickupNumber: 'Por favor, recuerde su número de recogida',
     contactInfo: 'Información de Contacto',

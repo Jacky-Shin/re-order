@@ -114,14 +114,14 @@ export default function OrderPage() {
                   <div className="text-sm text-gray-500">x{item.quantity}</div>
                 </div>
                 <div className="text-sb-green font-semibold">
-                  ¥{(item.price * item.quantity).toFixed(2)}
+                  ${(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t mt-4 pt-4 flex justify-between items-center">
             <span className="text-lg font-semibold">{t('order.total')}</span>
-            <span className="text-2xl font-bold text-sb-green">¥{getTotal().toFixed(2)}</span>
+            <span className="text-2xl font-bold text-sb-green">${getTotal().toFixed(2)}</span>
           </div>
         </div>
 

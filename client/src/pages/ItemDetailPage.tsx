@@ -3,12 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { menuApi } from '../api/client';
 import { MenuItem, CartItem, SelectedCustomization } from '../types';
 import { useCart } from '../contexts/CartContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import BottomNav from '../components/BottomNav';
 
 export default function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { t } = useLanguage();
   const [item, setItem] = useState<MenuItem | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedCustomizations, setSelectedCustomizations] = useState<Map<string, string>>(new Map());
@@ -135,12 +137,12 @@ export default function ItemDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500">商品未找到</p>
+          <p className="text-gray-500">{t('item.notFound')}</p>
           <button
             onClick={() => navigate('/menu')}
             className="mt-4 text-sb-green hover:underline"
           >
-            返回菜单
+            {t('menu.backToMenu')}
           </button>
         </div>
       </div>
@@ -160,7 +162,7 @@ export default function ItemDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="ml-4 text-lg font-semibold">商品详情</h1>
+          <h1 className="ml-4 text-lg font-semibold">{t('menu.viewDetails')}</h1>
         </div>
       </div>
 
@@ -185,7 +187,7 @@ export default function ItemDetailPage() {
         {/* Sizes */}
         {item.sizes && item.sizes.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">选择规格</h3>
+            <h3 className="text-lg font-semibold mb-3">{t('item.selectSize')}</h3>
             <div className="flex gap-3">
               {item.sizes.map((size) => {
                 const isBasePrice = size.isBasePrice !== false; // 默认是替换基础价格
@@ -201,7 +203,7 @@ export default function ItemDetailPage() {
                     }`}
                   >
                     <div className="font-semibold">{size.name}</div>
-                    <div className="text-sm text-gray-600">¥{displayPrice.toFixed(2)}</div>
+                    <div className="text-sm text-gray-600">${displayPrice.toFixed(2)}</div>
                   </button>
                 );
               })}
@@ -234,7 +236,7 @@ export default function ItemDetailPage() {
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{option.name}</span>
                           {option.price > 0 && (
-                            <span className="text-sb-green">+¥{option.price}</span>
+                            <span className="text-sb-green">+${option.price.toFixed(2)}</span>
                           )}
                         </div>
                       </button>
@@ -248,7 +250,7 @@ export default function ItemDetailPage() {
 
         {/* Quantity */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">数量</h3>
+          <h3 className="text-lg font-semibold mb-3">{t('item.quantity')}</h3>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -275,8 +277,8 @@ export default function ItemDetailPage() {
       <div className="fixed bottom-16 md:bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <div className="text-sm text-gray-500">总计</div>
-            <div className="text-2xl font-bold text-sb-green">¥{(calculatePrice() * quantity).toFixed(2)}</div>
+            <div className="text-sm text-gray-500">{t('cart.total')}</div>
+            <div className="text-2xl font-bold text-sb-green">${(calculatePrice() * quantity).toFixed(2)}</div>
           </div>
           <button
             onClick={handleAddToCart}
@@ -287,7 +289,7 @@ export default function ItemDetailPage() {
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {item.available ? '加入购物车' : '已售罄'}
+            {item.available ? t('menu.addToCart') : t('menu.soldOut')}
           </button>
         </div>
       </div>

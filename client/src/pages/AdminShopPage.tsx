@@ -303,7 +303,7 @@ export default function AdminShopPage() {
                     <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                     <div className="flex items-center justify-between">
                       <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                        ¥{item.price.toFixed(2)}
+                        ${item.price.toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -344,7 +344,7 @@ export default function AdminShopPage() {
                     <p className="text-xs md:text-sm text-gray-500 mb-3 font-medium">{item.nameEn}</p>
                     <div className="flex items-center justify-between">
                       <p className="text-lg md:text-xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                        ¥{item.price.toFixed(2)}
+                        ${item.price.toFixed(2)}
                       </p>
                     </div>
                   </div>

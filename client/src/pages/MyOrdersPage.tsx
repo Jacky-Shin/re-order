@@ -167,7 +167,7 @@ export default function MyOrdersPage() {
                           <div className="text-gray-500">x{item.quantity}</div>
                         </div>
                         <div className="text-sb-green font-semibold">
-                          ¥{(item.price * item.quantity).toFixed(2)}
+                          ${(item.price * item.quantity).toFixed(2)}
                         </div>
                       </div>
                     ))}
@@ -183,7 +183,7 @@ export default function MyOrdersPage() {
                 <div className="flex items-center justify-between pt-4 border-t">
                   <span className="font-semibold">Total</span>
                   <span className="text-xl font-bold text-sb-green">
-                    ¥{order.totalAmount.toFixed(2)}
+                    ${order.totalAmount.toFixed(2)}
                   </span>
                 </div>
 

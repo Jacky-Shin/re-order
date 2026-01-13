@@ -519,7 +519,7 @@ export default function OrderStatusPage() {
               {order.paymentMethod === 'cash' && order.paymentStatus === 'pending' && (
                 <div className="bg-white bg-opacity-50 rounded-lg p-3 mb-2">
                   <p className="text-sm font-semibold text-yellow-900">
-                    {t('order.readyNotification.paymentAmount')}: <span className="text-lg">¥{order.totalAmount.toFixed(2)}</span>
+                    {t('order.readyNotification.paymentAmount')}: <span className="text-lg">${order.totalAmount.toFixed(2)}</span>
                   </p>
                 </div>
               )}
@@ -566,14 +566,14 @@ export default function OrderStatusPage() {
                   <div className="text-sm text-gray-500">x{item.quantity}</div>
                 </div>
                 <div className="text-sb-green font-semibold">
-                  ¥{(item.price * item.quantity).toFixed(2)}
+                  ${(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t mt-4 pt-4 flex justify-between items-center">
-            <span className="text-lg font-semibold">总计</span>
-            <span className="text-2xl font-bold text-sb-green">¥{order.totalAmount.toFixed(2)}</span>
+            <span className="text-lg font-semibold">{t('order.total')}</span>
+            <span className="text-2xl font-bold text-sb-green">${order.totalAmount.toFixed(2)}</span>
           </div>
         </div>
 
@@ -587,13 +587,13 @@ export default function OrderStatusPage() {
             <div className="space-y-2 text-sm">
               {order.customerName && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">姓名:</span>
+                  <span className="text-gray-500">{t('orderStatus.name')}:</span>
                   <span className="font-medium">{order.customerName}</span>
                 </div>
               )}
               {order.phone && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">手机号:</span>
+                  <span className="text-gray-500">{t('orderStatus.phone')}:</span>
                   <span className="font-medium">{order.phone}</span>
                 </div>
               )}

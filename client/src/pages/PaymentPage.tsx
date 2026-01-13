@@ -250,7 +250,7 @@ export default function PaymentPage() {
             )}
             <div className="flex justify-between">
               <span className="text-gray-600">{t('payment.amount')}</span>
-              <span className="font-bold text-sb-green text-lg">¥{order.totalAmount.toFixed(2)}</span>
+              <span className="font-bold text-sb-green text-lg">${order.totalAmount.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -318,7 +318,7 @@ export default function PaymentPage() {
                   {t('payment.cashNoticeMessage')}
                 </p>
                 <p className="text-sm font-semibold text-yellow-900">
-                  {t('payment.amount')}：<strong>¥{order.totalAmount.toFixed(2)}</strong>
+                  {t('payment.amount')}: <strong>${order.totalAmount.toFixed(2)}</strong>
                 </p>
               </div>
             </div>

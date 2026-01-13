@@ -212,7 +212,7 @@ export default function AdminOrdersPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-sb-green mb-2">
-                      ¥{order.totalAmount.toFixed(2)}
+                      ${order.totalAmount.toFixed(2)}
                     </div>
                     {order.paymentStatus === 'completed' && (
                       <span className="text-xs text-green-600">{t('admin.orders.paid')}</span>
@@ -231,14 +231,14 @@ export default function AdminOrdersPage() {
                         <span>
                           {item.name} {item.size && `(${item.size})`} x{item.quantity}
                         </span>
-                        <span className="font-medium">¥{(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                     {/* 现金支付标识 */}
                     {order.paymentMethod === 'cash' && (
                       <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
                         <span className="font-semibold text-yellow-600">💵 {t('payment.cashPayment')}</span>
-                        <span className="font-semibold text-yellow-600">¥{order.totalAmount.toFixed(2)}</span>
+                        <span className="font-semibold text-yellow-600">${order.totalAmount.toFixed(2)}</span>
                       </div>
                     )}
                   </div>

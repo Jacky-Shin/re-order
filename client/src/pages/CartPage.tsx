@@ -123,7 +123,7 @@ export default function CartPage() {
                 )}
                 <div className="flex items-center justify-between mt-3">
                   <div className="text-2xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                    ¥{(item.price * item.quantity).toFixed(2)}
+                    ${(item.price * item.quantity).toFixed(2)}
                   </div>
                   <div className="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
                     <button
@@ -166,7 +166,7 @@ export default function CartPage() {
             <div>
               <span className="text-gray-600 text-sm font-medium">{t('cart.total')}</span>
               <p className="text-3xl font-bold bg-gradient-to-r from-sb-green to-sb-dark-green bg-clip-text text-transparent">
-                ¥{getTotal().toFixed(2)}
+                ${getTotal().toFixed(2)}
               </p>
             </div>
             <div className="text-right">

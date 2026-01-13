@@ -67,7 +67,7 @@ export default function AdminOrderStatsPage() {
             </div>
             <div className="text-sm text-gray-500">Pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.todayRevenue || 0).toFixed(2)}
+              ${(stats?.todayRevenue || 0).toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">Ingresos</div>
           </div>
@@ -82,7 +82,7 @@ export default function AdminOrderStatsPage() {
             </div>
             <div className="text-sm text-gray-500">Pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.monthRevenue || 0).toFixed(2)}
+              ${(stats?.monthRevenue || 0).toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">Ingresos</div>
           </div>
@@ -97,7 +97,7 @@ export default function AdminOrderStatsPage() {
             </div>
             <div className="text-sm text-gray-500">Total de pedidos</div>
             <div className="text-2xl font-bold text-green-600 mt-3">
-              ¥{(stats?.totalRevenue || 0).toFixed(2)}
+              ${(stats?.totalRevenue || 0).toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">Ingresos totales</div>
           </div>
@@ -108,7 +108,7 @@ export default function AdminOrderStatsPage() {
               <span className="text-2xl">💵</span>
             </div>
             <div className="text-4xl font-bold text-white mb-1">
-              ¥{(stats?.totalRevenue || 0).toFixed(2)}
+              ${(stats?.totalRevenue || 0).toFixed(2)}
             </div>
             <div className="text-sm text-green-100">Todos los ingresos</div>
             <div className="text-lg font-semibold text-white mt-3">
@@ -137,11 +137,11 @@ export default function AdminOrderStatsPage() {
                           className="bg-green-500 h-full rounded-full flex items-center justify-center text-white text-xs font-medium"
                           style={{ width: `${width}%` }}
                         >
-                          {day.revenue > 0 && `¥${day.revenue.toFixed(2)}`}
+                          {day.revenue > 0 && `$${day.revenue.toFixed(2)}`}
                         </div>
                       </div>
                       <div className="w-24 text-right text-sm text-green-600 font-medium">
-                        ¥{day.revenue.toFixed(2)}
+                        ${day.revenue.toFixed(2)}
                       </div>
                       <div className="w-16 text-right text-sm text-gray-600">
                         {day.count} pedidos
@@ -174,11 +174,11 @@ export default function AdminOrderStatsPage() {
                           className="bg-blue-500 h-full rounded-full flex items-center justify-center text-white text-xs font-medium"
                           style={{ width: `${width}%` }}
                         >
-                          {m.revenue > 0 && `¥${m.revenue.toFixed(2)}`}
+                          {m.revenue > 0 && `$${m.revenue.toFixed(2)}`}
                         </div>
                       </div>
                       <div className="w-24 text-right text-sm text-blue-600 font-medium">
-                        ¥{m.revenue.toFixed(2)}
+                        ${m.revenue.toFixed(2)}
                       </div>
                       <div className="w-16 text-right text-sm text-gray-600">
                         {m.count} pedidos

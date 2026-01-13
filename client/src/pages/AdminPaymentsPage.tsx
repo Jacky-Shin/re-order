@@ -81,7 +81,7 @@ export default function AdminPaymentsPage() {
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-600">{t('admin.dashboard.totalRevenue')}</div>
-            <div className="text-2xl font-bold text-sb-green">¥{totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-sb-green">${totalRevenue.toFixed(2)}</div>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function AdminPaymentsPage() {
                         <div className="text-sm text-gray-900">{getPaymentMethodText(payment.method)}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-semibold text-sb-green">¥{payment.amount.toFixed(2)}</div>
+                        <div className="text-sm font-semibold text-sb-green">${payment.amount.toFixed(2)}</div>
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(payment.status)}`}>

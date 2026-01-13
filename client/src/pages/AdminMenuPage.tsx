@@ -423,10 +423,10 @@ export default function AdminMenuPage() {
                       {(() => {
                         const { minPrice, maxPrice } = calculatePriceRange();
                         return minPrice === maxPrice ? (
-                          <p className="text-sm font-semibold text-sb-green">¥{minPrice.toFixed(2)}</p>
+                          <p className="text-sm font-semibold text-sb-green">${minPrice.toFixed(2)}</p>
                         ) : (
                           <p className="text-sm font-semibold text-sb-green">
-                            ¥{minPrice.toFixed(2)} - ¥{maxPrice.toFixed(2)}
+                            ${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}
                           </p>
                         );
                       })()}
@@ -747,7 +747,7 @@ export default function AdminMenuPage() {
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {getCategoryName(item.category)}
                       </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-sb-green">¥{item.price}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-sb-green">${item.price}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {t('admin.menu.sales')}: {salesCounts[item.id] || 0}
                       </td>

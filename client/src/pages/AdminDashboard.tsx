@@ -45,18 +45,18 @@ export default function AdminDashboard() {
     },
     {
       title: t('admin.dashboard.todayRevenue'),
-      value: `¥${(stats?.todayRevenue || 0).toFixed(2)}`,
-      subtitle: `${t('admin.stats.month')}: ¥${(stats?.monthRevenue || 0).toFixed(2)}`,
+      value: `$${(stats?.todayRevenue || 0).toFixed(2)}`,
+      subtitle: `${t('admin.stats.month')}: $${(stats?.monthRevenue || 0).toFixed(2)}`,
       icon: '💰',
       color: 'bg-green-500',
       link: null, // 今日收入仅作为数据展示，不跳转
       extraInfo: stats?.todayCashRevenue !== undefined && stats?.todayOtherRevenue !== undefined ? (
         <div className="mt-2 space-y-1">
           <p className="text-xs text-gray-500">
-            {t('admin.stats.cashRevenue')}: ¥{(stats.todayCashRevenue || 0).toFixed(2)}
+            {t('admin.stats.cashRevenue')}: ${(stats.todayCashRevenue || 0).toFixed(2)}
           </p>
           <p className="text-xs text-gray-500">
-            {t('admin.stats.otherPaymentRevenue')}: ¥{(stats.todayOtherRevenue || 0).toFixed(2)}
+            {t('admin.stats.otherPaymentRevenue')}: ${(stats.todayOtherRevenue || 0).toFixed(2)}
           </p>
         </div>
       ) : null,
@@ -268,8 +268,8 @@ export default function AdminDashboard() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-200/30 rounded-full -mr-16 -mt-16"></div>
               <div className="relative">
                 <div className="text-sm text-green-700 font-semibold mb-2">{t('admin.dashboard.monthRevenue')}</div>
-                <div className="text-4xl font-bold text-green-600 mb-1">¥{(stats?.monthRevenue || 0).toFixed(2)}</div>
-                <div className="text-xs text-green-600/70 font-medium">{t('admin.dashboard.totalRevenue')}: ¥{(stats?.totalRevenue || 0).toFixed(2)}</div>
+                <div className="text-4xl font-bold text-green-600 mb-1">${(stats?.monthRevenue || 0).toFixed(2)}</div>
+                <div className="text-xs text-green-600/70 font-medium">{t('admin.dashboard.totalRevenue')}: ${(stats?.totalRevenue || 0).toFixed(2)}</div>
               </div>
             </div>
           </div>
