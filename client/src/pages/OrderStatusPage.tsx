@@ -414,9 +414,6 @@ export default function OrderStatusPage() {
           {/* 排队提示 */}
           {(order.status === 'pending' || order.status === 'preparing') && queueInfo && (
             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-              <div className="text-sm text-blue-700 mb-2 font-medium">
-                {t('orderStatus.queueInfo.yourOrder')}: <span className="font-bold text-lg">{order.orderNumber}</span>
-              </div>
               {queueInfo.currentOrderNumber && (
                 <div className="text-sm text-blue-700 mb-2">
                   {t('orderStatus.queueInfo.currentPreparing')}: <span className="font-semibold">{queueInfo.currentOrderNumber}</span>
