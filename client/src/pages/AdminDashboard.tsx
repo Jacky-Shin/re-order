@@ -4,6 +4,8 @@ import { adminApi } from '../api/client';
 import { useLanguage } from '../contexts/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { databaseService } from '../services/database';
+import { onDatabaseUpdate } from '../utils/storageSync';
+import { firebaseService } from '../services/firebaseService';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -13,6 +15,45 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadStats();
+  }, []);
+
+  // 监听数据库更新事件（当用户下单时自动刷新统计数据）
+  useEffect(() => {
+    const unsubscribes: (() => void)[] = [];
+    let pollInterval: NodeJS.Timeout | null = null;
+    
+    // localStorage同步
+    const localStorageUnsubscribe = onDatabaseUpdate((key: string) => {
+      if (key === 'db_orders' || key === 'db_payments') {
+        console.log('🔄 检测到订单或支付数据更新，刷新统计数据...');
+        loadStats();
+      }
+    });
+    unsubscribes.push(localStorageUnsubscribe);
+    
+    // Firebase实时同步
+    if (firebaseService.isAvailable()) {
+      const firebaseUnsubscribe = firebaseService.onOrdersChange(() => {
+        console.log('🔄 Firebase订单变化，刷新统计数据...');
+        loadStats();
+      });
+      unsubscribes.push(firebaseUnsubscribe);
+    }
+    
+    // 添加轮询机制作为备用（每10秒检查一次统计数据）
+    // 这样可以确保即使监听机制失效，也能检测到新订单和统计数据变化
+    pollInterval = setInterval(() => {
+      loadStats().catch(err => {
+        console.warn('轮询检查统计数据失败:', err);
+      });
+    }, 10000); // 每10秒轮询一次（比订单页面稍长，因为统计数据不需要那么频繁更新）
+    
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
   }, []);
 
   const loadStats = async () => {
